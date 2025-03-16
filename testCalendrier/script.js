@@ -8,6 +8,15 @@ let eventTitleInput = document.getElementById('event-title');
 let eventDateInput = document.getElementById('event-date');
 let saveEventBtn = document.getElementById('save-event');
 
+//création d'un événenement en dure en js. Voir la propriété events.
+let eventCreated = [{
+    title: 'exemple événement créé',
+    start: '2025-03-23 09:00:00',
+    end: '2025-03-25 09:00:00',
+    backgroundColor: 'yellow',
+    color: 'red'
+}]
+
 document.addEventListener('DOMContentLoaded', () => {
     let mainCalendar = new FullCalendar.Calendar(principalCalendar, {
         dayMaxEventRows: true, // for all non-TimeGrid views
@@ -26,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay,list'
         },
 
         // Traductions des boutons affichés
@@ -37,6 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
             week: 'Semaine',
             day: 'Jour',
         },
+
+        events: eventCreated, 
+        nowIndicator: true,  //Afficher ou non un marqueur indiquant l'heure actuelle avec timeGrid
 
         eventDidMount: function (info) {
             // 🟢 Ajoute un tooltip Bootstrap pour chaque événement
@@ -78,13 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         height: '100vh',          // Remplit tout l'écran
-        contentHeight: 'auto',    // Ajuste automatiquement la hauteur du contenu
+        // contentHeight: 'auto',    // Ajuste automatiquement la hauteur du contenu
         expandRows: true,         // Étire les cellules pour éviter les espaces vides
         aspectRatio: 1.35,        // Largeur similaire à Google Agenda
 
-        // Limiter la hauteur des événements pour éviter qu'ils débordent
-        eventMaxHeight: 80,       // Limite la hauteur des événements
-
+        // // Limiter la hauteur des événements pour éviter qu'ils débordent
+        // eventMaxHeight: 80,       // Limite la hauteur des événements
+        
         // Gestion du débordement d'événements
         eventLimit: 3,            // Montre un maximum de 3 événements par jour, le reste sera dans un "more" (un bouton pour voir plus d'événements)
         eventLimitText: 'plus',   // Texte du bouton pour voir plus d'événements
@@ -93,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Rendu du calendrier
     mainCalendar.render();
 
-    // Ajout de l'événement lorsque le bouton est cliqué
+    // Ajout de l'événement lorsque le bouton est cliqué / création d'1 event 
     saveEventBtn.addEventListener('click', function () {
         if (eventTitleInput.value && eventDateInput.value) {
             var newEvent = {
@@ -114,3 +126,6 @@ function saveEventToLocalStorage(event) {
     events.push(event);
     localStorage.setItem('events', JSON.stringify(events));
 }
+
+
+//voir event source
