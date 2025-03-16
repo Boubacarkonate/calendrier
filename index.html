@@ -1,0 +1,277 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <div class="calendarHeader d-flex">
+            <button class="back">◀</button>
+            <div class="month mx-2"></div>
+            <button class="next">▶</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+</body>
+
+</html> -->
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier Indépendant</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container-fluid {
+            display: flex;
+            height: 100vh;
+        }
+
+        #sidebar {
+            width: 300px;
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #calendar-container {
+            flex-grow: 1;
+            padding: 20px;
+            background: white;
+        }
+
+        /* Style pour le mini-calendrier */
+        #mini-calendar {
+            max-width: 100%;
+            font-size: 0.75rem;
+            /* Réduire la taille du texte global */
+        }
+
+        /* Enlever toutes les bordures du mini-calendrier */
+        #mini-calendar .fc-daygrid {
+            border: none;
+            /* Enlever la bordure autour du calendrier */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Enlever les espaces internes des cellules du mini-calendrier */
+        #mini-calendar .fc-daygrid-day {
+            padding: 0;
+            /* Supprimer les espaces internes des cellules */
+            margin: 0;
+            /* Supprimer les marges autour des cellules */
+            border: none;
+            /* Enlever la bordure autour des cellules */
+            height: 30px;
+            /* Taille réduite des cellules */
+            width: 30px;
+            /* Taille réduite des cellules */
+        }
+
+        /* Centrer les dates dans les cellules du mini-calendrier */
+        #mini-calendar .fc-daygrid-day-number {
+            font-size: 0.75rem;
+            /* Taille réduite des numéros de jours */
+            text-align: center;
+            /* Aligner les dates au centre */
+            line-height: 30px;
+            /* Centrer verticalement le texte dans la cellule */
+            padding: 0;
+            /* Supprimer les espaces internes autour du texte */
+        }
+
+        /* Enlever les bordures de la table et les événements */
+        #mini-calendar td,
+        th {
+            border: none;
+            /* Supprimer les bordures de la table */
+            padding: 0;
+            /* Enlever les espaces autour des cellules de la table */
+            margin: 0;
+        }
+
+        /* Supprimer les événements du mini-calendrier */
+        #mini-calendar .fc-daygrid-day-events {
+            display: none;
+            /* Ne pas afficher les événements */
+        }
+
+        /* Supprimer la barre de titre */
+        #mini-calendar .fc-toolbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid">
+        <!-- Sidebar avec mini calendrier -->
+        <div id="sidebar">
+            <h4>📅 Calendrier Indépendant</h4>
+
+            <!-- Mini calendrier -->
+            <div id="mini-calendar"></div>
+
+            <button id="open-modal" class="btn btn-primary w-100 mt-3">+ Ajouter un événement</button>
+            <hr>
+            <button id="btn-month" class="btn btn-light w-100 mt-2">Vue Mois</button>
+            <button id="btn-week" class="btn btn-light w-100 mt-2">Vue Semaine</button>
+            <button id="btn-day" class="btn btn-light w-100 mt-2">Vue Jour</button>
+        </div>
+
+        <!-- Calendrier principal -->
+        <div id="calendar-container">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- Modal pour ajouter un événement -->
+    <div class="modal fade" id="addEventModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter un événement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="event-title" class="form-label">Titre</label>
+                    <input type="text" id="event-title" class="form-control mb-2" placeholder="Nom de l'événement">
+
+                    <label for="event-date" class="form-label">Date</label>
+                    <input type="datetime-local" id="event-date" class="form-control mb-2">
+
+                    <button id="save-event" class="btn btn-success w-100">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var miniCalendarEl = document.getElementById('mini-calendar');
+            var eventTitleInput = document.getElementById('event-title');
+            var eventDateInput = document.getElementById('event-date');
+            var saveEventBtn = document.getElementById('save-event');
+            var openModalBtn = document.getElementById('open-modal');
+            var addEventModal = new bootstrap.Modal(document.getElementById('addEventModal'));
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                dayMaxEventRows: true, // for all non-TimeGrid views
+                views: {
+                    timeGrid: {
+                        dayMaxEventRows: 2 // adjust to 6 only for timeGridWeek/timeGridDay
+                    }
+                },
+                initialView: 'dayGridMonth',
+                selectable: true,
+                editable: true,
+                droppable: true,
+                events: JSON.parse(localStorage.getItem('events')) || [],
+
+                eventDidMount: function (info) {
+                    // 🟢 Ajoute un tooltip Bootstrap pour chaque événement
+                    info.el.setAttribute("title", info.event.title);
+                    new bootstrap.Tooltip(info.el, {
+                        placement: "top",
+                        trigger: "hover"
+                    });
+                },
+
+                moreLinkDidMount: function (info) {
+                    // 🔵 Ajoute un popover Bootstrap au "+X more"
+                    let events = info.segs.map(seg => `<li>${seg.event.title}</li>`).join("");
+                    let content = `<ul class="list-unstyled mb-0">${events}</ul>`;
+
+                    let popover = new bootstrap.Popover(info.el, {
+                        html: true,
+                        content: content,
+                        trigger: "hover",
+                        placement: "auto"
+                    });
+
+                    info.el.setAttribute("data-bs-toggle", "popover");
+                    info.el.setAttribute("data-bs-content", content);
+                },
+
+                dateClick: function (info) {
+                    eventTitleInput.value = "";
+                    eventDateInput.value = info.dateStr + "T12:00";
+                    addEventModal.show();
+                },
+
+                eventDrop: function (info) {
+                    updateLocalStorage();
+                },
+
+                eventResize: function (info) {
+                    updateLocalStorage();
+                }
+            });
+
+            calendar.render();
+
+            function updateLocalStorage() {
+                var events = [];
+                calendar.getEvents().forEach(event => {
+                    events.push({ title: event.title, start: event.start.toISOString() });
+                });
+                localStorage.setItem('events', JSON.stringify(events));
+            }
+
+            saveEventBtn.addEventListener('click', function () {
+                if (eventTitleInput.value && eventDateInput.value) {
+                    var newEvent = {
+                        title: eventTitleInput.value,
+                        start: eventDateInput.value
+                    };
+                    calendar.addEvent(newEvent);
+                    saveEventToLocalStorage(newEvent);
+                    addEventModal.hide();
+                }
+            });
+
+            function saveEventToLocalStorage(event) {
+                var events = JSON.parse(localStorage.getItem('events')) || [];
+                events.push(event);
+                localStorage.setItem('events', JSON.stringify(events));
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>
