@@ -1,0 +1,430 @@
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<script src="/js/calendrier/calendrier.js"></script>
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/calendrier/calendrier.css" />
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/fiche.css" />
+
+
+
+
+<div id="page-container">
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <button type="button" id="create-event" class="btn btn-secondary btn-lg fw-semibold">
+            <i class="fa fa-plus"></i> Nouvel événement
+        </button>
+
+        <!-- Mini calendrier -->
+        <div id="mini-calendar"></div>
+
+        <!-- Bouton pour afficher la recherche -->
+        <button type="button" id="btn-filter" class="btn btn-outline-primary btn-sm mb-3 w-100">
+            Rechercher
+        </button>
+
+        <!-- Filtres -->
+        <div id="filters"></div>
+
+        <!-- Accordéon -->
+        <div class="accordion" id="accordionPanelsStayOpenExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="false"
+                        aria-controls="panelsStayOpen-collapseOne">
+                        Mes calendriers
+                    </button>
+                </h2>
+                <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="google-agenda">
+                                <label for="google-agenda" class="ps-2">Google Agenda</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="outlook">
+                                <label for="outlook" class="ps-2">Outlook</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#panelsStayOpen-collapseTwo" aria-expanded="false"
+                        aria-controls="panelsStayOpen-collapseTwo">
+                        Bénéficiaires
+                    </button>
+                </h2>
+                <div id="panelsStayOpen-collapseTwo" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne1">
+                                <label for="personne1" class="px-2">Personne 1</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne2">
+                                <label for="personne2" class="px-2">Personne 2</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne3">
+                                <label for="personne3" class="ps-2">Personne 3</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendrier principal -->
+    <div id="principal-calendar"></div>
+
+    <!-- Barre de recherche -->
+    <div id="search-bar" class="champmodif blocpopover collapse fade">
+        <input type="button" class="rz-bouton btnbloc" value="Fermer"
+            onclick="document.getElementById('search-bar').classList.remove('show')">
+
+        <input class="d-none" type="checkbox" name="" value="" checked required>
+
+        <span>
+            <input class="champmodif" type="search" placeholder="Rechercher">
+            <span class="ms-2">
+                <input class="rz-bouton" type="button" title="Début" value="<<">
+                <input class="rz-bouton" type="button" title="Précédent" value="<">
+                <input class="rz-bouton" type="button" title="Suivant" value=">">
+                <input class="rz-bouton" type="button" title="Fin" value=">>">
+                <span>1/1</span>
+            </span>
+            <hr>
+        </span>
+
+        <div class="blocgrille">
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1" checked></label>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <button id="btnSearchValidate" class="btn btn-light mt-4 shadow-lg">Valider</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const principalCalendar = document.getElementById('principal-calendar');
+    const miniCalendar = document.getElementById('mini-calendar');
+    const btnCreateEvent = document.getElementById('create-event');
+    // bouton filtre de recherche
+    const btnValidate = document.getElementById("btnSearchValidate");
+    const btnFilter = document.getElementById("btn-filter");
+    const searchBar = document.getElementById("search-bar");
+    const accordion = document.getElementById("accordionPanelsStayOpenExample");
+
+
+    const dateToString = (date) => {
+        m = date.getMonth() + 1
+        d = date.getDate()
+        return date.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d)
+    }
+
+    // Fonction pour ouvrir le formulaire d'ajout d'événement
+const openEventForm = (selectedDate, onConfirm) => {
+    displayConfirmDialog(
+        `<div class="mb-3">
+            <label for="event-title">Titre :</label>
+            <input type="text" id="event-title" class="form-control form-control-sm" placeholder="Nom de l'événement">
+        </div>
+        <div class="mb-3">
+            <label for="event-date">Date :</label>
+            <input type="date" id="event-date" class="form-control form-control-sm" value="${dateToString(selectedDate)}">
+        </div>
+        <div class="mb-3">
+            <label for="event-start">Heure de début :</label>
+            <input type="time" id="event-start" class="form-control form-control-sm">
+        </div>
+        <div class="mb-3">
+            <label for="event-end">Heure de fin :</label>
+            <input type="time" id="event-end" class="form-control form-control-sm">
+        </div>
+        <div class="mb-3">
+            <label for="event-color">Couleur de l'événement :</label>
+            <input type="color" id="event-color" class="form-control form-control-color" value="#563d7c">
+        </div>`,
+        400,
+        "Ajouter un événement",
+        true,
+        false,
+        600,
+        function () { // Bouton confirmer
+            let eventData = getEventFormData();
+            if (eventData) onConfirm(eventData);
+        },
+        function () { // Bouton annuler
+            console.log("Ajout annulé");
+        }
+    );
+}
+
+// Fonction pour récupérer et valider les données du formulaire
+const getEventFormData = () => {
+    let title = document.getElementById('event-title').value;
+    let date = document.getElementById('event-date').value;
+    let startTime = document.getElementById('event-start').value;
+    let endTime = document.getElementById('event-end').value;
+    let color = document.getElementById('event-color').value;
+
+    if (!title) {
+        alert("Veuillez entrer un titre pour l'événement.");
+        return null;
+    }
+    if (!startTime || !endTime) {
+        alert("Veuillez spécifier une heure de début et une heure de fin.");
+        return null;
+    }
+    if (endTime <= startTime) {
+        alert("L'heure de fin doit être après l'heure de début.");
+        return null;
+    }
+
+    return {
+        title: title,
+        start: `${date}T${startTime}`,
+        end: `${date}T${endTime}`,
+        backgroundColor: color
+    };
+}
+
+// Fonction pour ajouter un événement à un calendrier donné
+const addEventToCalendar = (calendar, eventData) => {
+    calendar.addEvent(eventData);
+    console.log("Événement ajouté :", eventData);
+}
+
+    // Mini Calendrier
+    let smallCalendar = new FullCalendar.Calendar(miniCalendar, {
+        initialView: 'dayGridMonth',
+        locale: 'fr',
+        dayHeaderFormat: { weekday: 'narrow' }, // Affiche seulement la première lettre du jour
+        firstDay: 1,
+        headerToolbar: {
+            left: 'title',
+            center: '',
+            right: 'prev,next'
+        },
+        dateClick: function (info) {
+            // au click de la date du dans le mini calendrier, le calendrier affiche cette date
+            mainCalendar.changeView('timeGridWeek', info.dateStr);
+        }
+    });
+
+    smallCalendar.render();
+
+    // Calendrier Principal
+    let mainCalendar = new FullCalendar.Calendar(principalCalendar, {
+        initialView: 'timeGridWeek', // initialisation du calendrier par semaine
+        allDayText: '', // suppression "all-day"
+        firstDay: 1,  //commencer l'affichage de la semaine à partir de lundi
+        showNonCurrentDates: false,
+        locale: 'fr', // Date en français
+        selectable: true, // Permet de sélectionner des dates
+        editable: true, // Permet d'éditer/déplacer les événements
+        scrollTimeReset: false, // 	Reste sur l'heure scrollée ou non
+        // Affichage des boutons
+        headerToolbar: {
+            left: 'today prev,next',
+            center: 'title',
+            right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        buttonText: {
+            today: "Aujourd'hui",
+            year: 'Année',
+            month: 'Mois',
+            week: 'Semaine',
+            day: 'Jour',
+        },
+        dayMaxEventRows: true, // Limites le nombre d'affichage d'événements dans la vue lorsqu'il y en a trop
+        height: '80vh',          // Remplit tout l'écran
+        expandRows: true,         // Étire les cellules pour éviter les espaces vides
+        aspectRatio: 1.35,
+        eventLimit: 3, // Limite le nombre d'événements par jour
+        eventLimitText: 'plus', // Texte pour les événements supplémentaires
+
+        // events: eventCreated,
+        eventSources: [],
+
+        // Synchronisation avec le mini calendrier
+        dateClick: function (info) {
+            smallCalendar.gotoDate(info.dateStr);
+            
+            openEventForm(info.date, function (eventData) {
+                addEventToCalendar(mainCalendar, eventData);
+            });
+        },    
+
+        // Configuration de l'affichage de l'événement
+        eventContent: function (arg) {
+            let title = document.createElement('div');
+            title.style.fontWeight = 'bold';
+            title.textContent = arg.event.title;
+
+            let time = document.createElement('div');
+            time.textContent = arg.timeText;
+
+            let container = document.createElement('div');
+            container.appendChild(title);
+            container.appendChild(time);
+
+            return { domNodes: [container] };
+        },
+
+        eventDrop: function (info) {
+         
+            let startDate = new Date(info.event.start);
+            let endDate = new Date(info.event.end);
+        
+
+            let startFormatted = startDate.toLocaleString('fr-FR', {  
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: false
+            });
+        
+            let endFormatted = endDate.toLocaleString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: false
+            });
+
+            displayConfirmDialog(
+                `<div>
+                ${startFormatted} - ${endFormatted}
+                </div>
+                `,
+                400,
+                `Evénement ${info.event.title} déplacé`,
+                true,
+                false,
+                400,
+                function () { //  Si bouton confirmé
+                 
+                    console.log(info.event.start);
+                   
+                },
+                function () { // Si bouton annulé
+                    console.log(info.revert()); 
+                }
+            );
+        },
+
+            eventClick: function(info) {
+                let startDate = new Date(info.event.start);
+                let endDate = new Date(info.event.end);
+            
+    
+                let startFormatted = startDate.toLocaleString('fr-FR', {  
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: false
+                });
+            
+                let endFormatted = endDate.toLocaleString('fr-FR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: false
+                });
+    
+                displayConfirmDialog(
+                    `<div class="mb-3">
+                    <h3>${info.event.title} </h3>
+                    <p>début : ${startFormatted}</p>
+                    <p>fin : ${endFormatted}</p>
+                    </div>
+                `,
+                    400,
+                   false,
+                    true,
+                    false,
+                    400,
+                    function () { //  Si bouton confirmé
+
+                    },
+                    function () { // Si bouton annulé
+                       
+                    }
+                );
+          
+            }
+
+    });
+
+    mainCalendar.render();
+
+
+
+    // Synchronisation du mini calendrier avec le calendrier principal
+    mainCalendar.on('datesSet', function (info) {
+        smallCalendar.gotoDate(info.view.currentStart);
+    });
+
+
+// bouton +événement
+    btnCreateEvent.addEventListener('click', () => {
+        openEventForm(new Date(), function (eventData) {
+            addEventToCalendar(mainCalendar, eventData);
+        });
+    });
+
+
+    // Afficher/Masquer la barre de recherche au clic sur "Rechercher"
+    btnFilter.addEventListener("click", () => {
+        searchBar.classList.toggle("show");
+    });
+
+    // Afficher l'accordéon seulement après validation
+    btnValidate.addEventListener("click", () => {
+        accordion.style.display = "block"; // Afficher l'accordéon
+    });
+
+
+
+});
+
+
+
+/*Ne PAS OUBLIER : manipuler les autres éléments malgré la modal 
+bordures des events,
+hover sur les events
+ajouter une description dans les events ?
+curseur de la souris sur mini calendrier à modifier
+--- faire la recherche, la synchronisation, 
+bouton pour effacer l'accordeon ?
+*/
+
+
+
+</script>

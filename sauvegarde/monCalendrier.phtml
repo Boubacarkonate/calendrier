@@ -1,0 +1,119 @@
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<script src="/js/calendrier/calendrier.js"></script>
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/calendrier/calendrier.css" />
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/fiche.css" />
+
+
+
+
+<div id="page-container">
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <button type="button" id="create-event" class="btn btn-secondary btn-lg fw-semibold">
+            <i class="fa fa-plus"></i> Nouvel événement
+        </button>
+
+        <!-- Mini calendrier -->
+        <div id="mini-calendar"></div>
+
+        <!-- Bouton pour afficher la recherche -->
+        <button type="button" id="btn-filter" class="btn btn-outline-primary btn-sm mb-3 w-100">
+            Rechercher
+        </button>
+
+        <!-- Filtres -->
+        <div id="filters"></div>
+
+        <!-- Accordéon -->
+        <div class="accordion" id="accordionPanelsStayOpenExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="false"
+                        aria-controls="panelsStayOpen-collapseOne">
+                        Mes calendriers
+                    </button>
+                </h2>
+                <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="google-agenda">
+                                <label for="google-agenda" class="ps-2">Google Agenda</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="outlook">
+                                <label for="outlook" class="ps-2">Outlook</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#panelsStayOpen-collapseTwo" aria-expanded="false"
+                        aria-controls="panelsStayOpen-collapseTwo">
+                        Bénéficiaires
+                    </button>
+                </h2>
+                <div id="panelsStayOpen-collapseTwo" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne1">
+                                <label for="personne1" class="px-2">Personne 1</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne2">
+                                <label for="personne2" class="px-2">Personne 2</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne3">
+                                <label for="personne3" class="px-2">Personne 3</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendrier principal -->
+    <div id="principal-calendar"></div>
+
+    <!-- Barre de recherche -->
+    <div id="search-bar" class="champmodif blocpopover collapse fade">
+        <input type="button" class="rz-bouton btnbloc" value="Fermer"
+            onclick="document.getElementById('search-bar').classList.remove('show')">
+
+        <input class="d-none" type="checkbox" name="" value="" checked required>
+
+        <span>
+            <input class="champmodif" type="search" placeholder="Rechercher">
+            <span class="ms-2">
+                <input class="rz-bouton" type="button" title="Début" value="<<">
+                <input class="rz-bouton" type="button" title="Précédent" value="<">
+                <input class="rz-bouton" type="button" title="Suivant" value=">">
+                <input class="rz-bouton" type="button" title="Fin" value=">>">
+                <span>1/1</span>
+            </span>
+            <hr>
+        </span>
+
+        <div class="blocgrille">
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1"></label>
+            <label class="d-flex align-items-center"><input type="checkbox" class="me-1" checked></label>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <button id="btnSearchValidate" class="btn btn-light mt-4 shadow-lg">Valider</button>
+        </div>
+    </div>
+</div>

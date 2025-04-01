@@ -22,10 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
         dayMaxEventRows: true, // for all non-TimeGrid views
         views: {
             timeGrid: {
-              dayMaxEventRows: 3 // adjust to 6 only for timeGridWeek/timeGridDay
+                dayMaxEventRows: 3 // adjust to 6 only for timeGridWeek/timeGridDay
             }
-          },
-        
+        },
+
         initialView: 'dayGridMonth',   // Vue par défaut : mois
         locale: 'fr',                  // date en français
         selectable: true,              // Permet la sélection des dates
@@ -47,15 +47,22 @@ document.addEventListener('DOMContentLoaded', () => {
             day: 'Jour',
         },
 
-        events: eventCreated, 
+        events: eventCreated,
         nowIndicator: true,  //Afficher ou non un marqueur indiquant l'heure actuelle avec timeGrid
 
         eventDidMount: function (info) {
             // 🟢 Ajoute un tooltip Bootstrap pour chaque événement
             info.el.setAttribute("title", info.event.title);
             new bootstrap.Tooltip(info.el, {
-                placement: "top",
-                trigger: "hover"
+                placement: "top",  // Position du tooltip
+                trigger: "hover",  // Afficher au survol
+                animation: true,  // Animation activée
+                delay: { show: 500, hide: 100 },  // Délai avant d'afficher et de cacher le tooltip
+                html: true,  // Autoriser du contenu HTML dans le tooltip
+                container: "body",  // Placer le tooltip dans le body
+                customClass: "custom-tooltip",  // Ajouter une classe personnalisée
+                offset: "10, 5",  // Décaler le tooltip
+                fallbackPlacement: ["top", "bottom"],  // Placement alternatif
             });
         },
 
@@ -81,13 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
             addEventModal.show();
         },
 
-        eventDrop: function (info) {
-            updateLocalStorage();
-        },
+        // eventDrop: function (info) {
+        //     updateLocalStorage();
+        // },
 
-        eventResize: function (info) {
-            updateLocalStorage();
-        },
+        // eventResize: function (info) {
+        //     updateLocalStorage();
+        // },
 
         height: '100vh',          // Remplit tout l'écran
         // contentHeight: 'auto',    // Ajuste automatiquement la hauteur du contenu
@@ -96,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // // Limiter la hauteur des événements pour éviter qu'ils débordent
         // eventMaxHeight: 80,       // Limite la hauteur des événements
-        
+
         // Gestion du débordement d'événements
         eventLimit: 3,            // Montre un maximum de 3 événements par jour, le reste sera dans un "more" (un bouton pour voir plus d'événements)
         eventLimitText: 'plus',   // Texte du bouton pour voir plus d'événements
@@ -114,18 +121,18 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             mainCalendar.addEvent(newEvent); // Ajoute l'événement au calendrier
-            saveEventToLocalStorage(newEvent); // Sauvegarde l'événement dans le localStorage
+            // saveEventToLocalStorage(newEvent); // Sauvegarde l'événement dans le localStorage
             addEventModal.hide(); // Cache le modal
         }
     });
 });
 
 // Fonction pour sauvegarder l'événement dans le localStorage
-function saveEventToLocalStorage(event) {
-    let events = JSON.parse(localStorage.getItem('events')) || [];
-    events.push(event);
-    localStorage.setItem('events', JSON.stringify(events));
-}
+// function saveEventToLocalStorage(event) {
+//     let events = JSON.parse(localStorage.getItem('events')) || [];
+//     events.push(event);
+//     localStorage.setItem('events', JSON.stringify(events));
+// }
 
 
 //voir event source

@@ -1,0 +1,38 @@
+<script src="/jquery/ux/calendrier/api.js"></script>
+<script src="/jquery/ux/calendrier/zfcaldavevent.js"></script>
+<?php if ($this->uid !== '') : ?>
+<script>
+window.addEventListener("load", async () => {
+    const cell = document.getElementById('<?= $this->vr ?>');
+    const data = await getEvent('<?= $this->uid ?>');
+    if (data !== false) loadZfcaldavevent(cell, data);
+})
+</script>
+<?php endif; ?>
+<fieldset id="<?= $this->vr ?>">
+    <legend class="champlabel"><?= $this->nom_affiche ?>
+        <?php if (isset($this->infobulle)) : ?>
+        <span class="rz-infobulle-declencheur">&#9432;
+            <div class="rz-infobulle-texte">
+                <?= $this->infobulle ?>
+            </div>
+        </span>
+        <?php endif; ?>
+    </legend>
+    <input id="<?= $this->vr ?>title" type="text" class="inputtableur" placeholder="Titre"
+        name="<?= $this->vr ?>[titre]" <?= $this->obligatoire ? 'required ' : '' ?> />
+    <span>
+        <label for="<?= $this->vr ?>date">Date de l'évènement : </label>
+        <input id="<?= $this->vr ?>date" type="date" class="inputtableur" name="<?= $this->vr ?>[date]"
+            <?= $this->obligatoire ? 'required ' : '' ?> />
+        <label for="<?= $this->vr ?>start">Heure de début : </label>
+        <input id="<?= $this->vr ?>start" type="time" class="champmodif" name="<?= $this->vr ?>[deb]" />
+        <label for="<?= $this->vr ?>end">Heure de fin : </label>
+        <input id="<?= $this->vr ?>end" type="time" class="champmodif" name="<?= $this->vr ?>[fin]" />
+        <label for="<?= $this->vr ?>color">Couleur sur le calendrier : </label>
+        <input id="<?= $this->vr ?>color" type="color" class="rz-bouton" value="#00bfff"
+            name="<?= $this->vr ?>[couleur]" />
+    </span>
+    <input type="hidden" name="<?= $this->vr ?>[id]" value="<?= $this->uid ?>" />
+    <input id="<?= $this->vr ?>tag" type="hidden" />
+</fieldset>

@@ -302,3 +302,72 @@
 // </body>
 
 // </html>
+
+
+
+
+ // // création d'un événement avec le bouton créer
+    // btnCreateEvent.addEventListener('click', () => {
+    //     addEventModal.show();
+    // })
+
+
+    // // créer un nouvel événement
+    // saveEventBtn.addEventListener('click', function (e) {
+    //     e.preventDefault();
+
+    //     let title = eventTitleInput.value;
+    //     let date = eventDateInput.value;
+    //     let startTime = eventStartInput.value;
+    //     let endTime = eventEndInput.value;
+
+    //     if (!title || !date || !startTime || !endTime) {
+    //         alert("Veuillez remplir tous les champs !");
+    //         return;
+    //     }
+
+    //     let startDateTime = `${date}T${startTime}:00`; // Format complet
+    //     let endDateTime = `${date}T${endTime}:00`;
+
+    //     if (new Date(endDateTime) <= new Date(startDateTime)) {
+    //         alert("L'heure de fin doit être après l'heure de début !");
+    //         return;
+    //     }
+
+    //     var newEvent = {
+    //         title: title,
+    //         start: startDateTime,
+    //         end: endDateTime
+    //     };
+
+    //     // Ajoute l'événement au calendrier
+    //     mainCalendar.addEvent(newEvent);
+
+    //     // Fermer la modal
+
+    //     // Réinitialiser les champs du formulaire
+    //     eventTitleInput.value = "";
+    //     eventDateInput.value = "";
+    //     eventStartInput.value = "";
+    //     eventEndInput.value = "";
+
+    //     // petit délai 
+    //     setTimeout(() => {
+    //         addEventModal.hide();
+    //     }, 300);
+
+    //     console.log("Événement ajouté :", newEvent);
+    // });
+
+
+
+    // // déplacer la modal
+    // $(document).ready(function () {
+    //     $("#addEventModal").draggable({
+    //         // handle: ".modal-header"
+    //     });
+    // });
+
+    // // $(() => {
+    // //     $('#addEventModal').resizable();
+    // // })
