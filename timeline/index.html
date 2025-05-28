@@ -1,0 +1,469 @@
+
+<!-- d3js -->
+<!-- <!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Timeline D3.js</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .event {
+      fill: steelblue;
+      cursor: pointer;
+    }
+    .event:hover {
+      fill: orange;
+    }
+    .label {
+      font-size: 12px;
+      text-anchor: middle;
+    }
+  </style>
+</head>
+<body>
+  <svg width="800" height="200"></svg>
+
+  <script>
+    const data = [
+      { date: new Date(2020, 0, 1), label: "Début" },
+      { date: new Date(2021, 5, 15), label: "Milieu" },
+      { date: new Date(2022, 11, 30), label: "Fin" }
+    ];
+
+    const svg = d3.select("svg");
+    const width = +svg.attr("width");
+    const height = +svg.attr("height");
+
+    const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+    const innerWidth = width - margin.left - margin.right;
+
+    const x = d3.scaleTime()
+      .domain(d3.extent(data, d => d.date))
+      .range([margin.left, width - margin.right]);
+
+    const xAxis = d3.axisBottom(x).ticks(5);
+
+    svg.append("g")
+      .attr("transform", `translate(0, ${height - margin.bottom})`)
+      .call(xAxis);
+
+    svg.selectAll(".event")
+      .data(data)
+      .enter()
+      .append("circle")
+      .attr("class", "event")
+      .attr("cx", d => x(d.date))
+      .attr("cy", height / 2)
+      .attr("r", 6);
+
+    svg.selectAll(".label")
+      .data(data)
+      .enter()
+      .append("text")
+      .attr("class", "label")
+      .attr("x", d => x(d.date))
+      .attr("y", (height / 2) - 15)
+      .text(d => d.label);
+
+      const milestones = [
+  { date: new Date(2020, 6, 1), label: "Phase 1" },
+  { date: new Date(2021, 11, 1), label: "Phase 2" }
+];
+
+// Lignes verticales pour les jalons
+svg.selectAll(".milestone-line")
+  .data(milestones)
+  .enter()
+  .append("line")
+  .attr("class", "milestone-line")
+  .attr("x1", d => x(d.date))
+  .attr("x2", d => x(d.date))
+  .attr("y1", margin.top)
+  .attr("y2", height - margin.bottom)
+  .attr("stroke", "red")
+  .attr("stroke-dasharray", "4");
+
+// Labels pour les jalons
+svg.selectAll(".milestone-label")
+  .data(milestones)
+  .enter()
+  .append("text")
+  .attr("class", "milestone-label")
+  .attr("x", d => x(d.date))
+  .attr("y", margin.top - 10)
+  .attr("text-anchor", "middle")
+  .attr("fill", "red")
+  .text(d => d.label);
+
+  </script>
+</body>
+</html>
+ -->
+
+<!-- vs.timeline -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Timeline du Parcours Salarié</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
+    <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+    <style>
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; /* S'assurer que le corps et la page occupent toute la hauteur */
+}
+.dateContainer{
+    display: flex;
+}
+
+#timeline-widget {
+    height: 100vh; /* Utiliser toute la hauteur de la fenêtre (viewport height) */
+    width: 100%;  /* S'assurer que la timeline occupe toute la largeur de la page */
+}
+
+#timeline-arrow {
+    font-size: 100px;
+    color: #ac0909;
+    align-self: flex-end;
+    font-size: 300px;
+}
+
+.chevrons{
+    display: flex;
+}
+
+
+
+
+
+/* Ajout des autres styles */
+body {
+    font-family: sans-serif;
+    padding: 20px;
+}
+
+.vis-item.conforme {
+    /* background-color: #4CAF50;
+    border-color: #388E3C; */
+    color: white;
+}
+
+.vis-item.nonconforme {
+    /* background-color: #F44336;
+    border-color: #D32F2F; */
+    color: white;
+}
+.vis-item.dureeLong {
+    background-color: #F44336;
+    border-color: #D32F2F;
+    color: white;
+}
+
+.vis-item.point::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: currentColor;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 4px;
+  }
+
+  .vis-item.range {
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+
+  .vis-item.jalon::before {
+    content: "🚩";
+    position: absolute;
+    left: -10px;
+    font-size: 16px;
+  }
+
+  .vis-item.jalon.point {
+    width: auto;
+    height: auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+
+  .vis-item.jalon {
+    background-color: transparent;
+    border: none;
+    font-weight: bold;
+    color: #1976D2;
+  }
+
+.vis-item:hover {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transform: scale(1.05);
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.vis-time-axis .vis-text.vis-major::after {
+    content: '→';
+    font-size: 20px;
+    margin-left: 10px;
+    color: #555; /* Couleur de la flèche */
+    position: relative;
+    top: -2px; /* Ajuste verticalement si besoin */
+}
+
+
+.vis-label,
+.vis-group {
+    height: 100px !important; /* Hauteur des labels ET des groupes */
+    /* line-height: 100px !important; Centre verticalement le texte dans le label */
+}
+
+
+
+.vis-label .vis-inner {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    font-weight: bold;
+    min-width: 200px !important;
+}
+
+
+.vis-item.point {
+    border-radius: 50%;
+    width: 20px; /* Taille des points */
+    height: 20px; /* Taille des points */
+    background-color: #FF5722; /* Couleur personnalisée pour les points */
+}
+
+/* Personnalisation des points conformes */
+.vis-item.conforme.point {
+    background-color: #4CAF50; /* Couleur verte pour les points conformes */
+}
+
+/* Personnalisation des points non conformes */
+.vis-item.nonconforme.point {
+    background-color: #F44336; /* Couleur rouge pour les points non conformes */
+}
+
+#filters {
+    margin-bottom: 10px;
+}
+
+#filters input {
+    margin-right: 10px;
+}
+
+#zoom-control {
+    margin: 20px 0;
+}
+
+.panel {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.panel h3 {
+    margin-top: 0;
+}
+
+.group-collapsible {
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #f0f0f0;
+    padding: 10px;
+}
+
+.group-content {
+    display: none;
+    padding-left: 20px;
+}
+
+
+.arrow-right {
+    /* width: 0; */
+    /* height: 0; */
+    /* flex-basis: 0; */
+    border-top: 5vh solid transparent;
+    border-bottom: 5vh solid transparent;
+    background-color: #D32F2F;
+    border-left: 5vh solid var(--bs-dark);
+}
+
+
+    </style>
+</head>
+<body>
+    <h2>Visualisation du Parcours Salarié</h2>
+    
+    <div id="filters">
+        <label><input type="checkbox" class="filter-checkbox" data-group="1" checked> Bilans</label>
+        <label><input type="checkbox" class="filter-checkbox" data-group="2" checked> Entretiens</label>
+        <label><input type="checkbox" class="filter-checkbox" data-group="3" checked> Fiches de Synthèse</label>
+        <label><input type="checkbox" class="filter-checkbox" data-group="4" checked> Démarches</label>
+    </div>
+    <div class="arrow-right"></div>
+
+    <!-- <div id="zoom-control">
+        Zoom: <input type="range" min="1" max="5" value="3" id="zoom-slider" />
+    </div> -->
+<div class="dateContainer">
+
+    <!-- <div id="timeline-widget"></div> -->
+    <div id="timeline-arrow">
+        <!-- → -->
+         <!-- > -->
+          <!-- <div class="chevrons">
+              <i class="fa-solid fa-chevron-right"></i>
+              <i class="fa-solid fa-chevron-right"></i>
+          </div> -->
+          <img src="chronologie.png" alt="">
+    </div>
+</div>
+
+
+    <div class="panel" id="details-panel" style="display: none;">
+        <h3>Détails de l'Action</h3>
+        <p id="details-title"></p>
+        <p id="details-description"></p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const container = document.getElementById('timeline-widget');
+        
+            // Définir les groupes
+            const groups = new vis.DataSet([
+                { id: 1, content: 'Bilans' },
+                { id: 2, content: 'Entretiens' },
+                { id: 3, content: 'Fiches de Synthèse' },
+                { id: 4, content: 'Démarches' },
+                { id: 5, content: 'Contrats' }
+            ]);
+        
+            // Données brutes
+            const rawItems = [
+                { id: 1, group: 1, content: "Bilan d'entrée", start: "2024-01-01", title: "Bilan d'entrée", className: 'conforme' },
+                { id: 2, group: 1, content: "Bilan de fin", start: "2024-03-01", title: "Bilan de fin", className: 'nonconforme' },
+                { id: 3, group: 2, content: "Entretien Annuel", start: "2024-02-01", title: "Entretien annuel", className: 'conforme' },
+                { id: 4, group: 3, content: "Fiche de Synthèse", start: "2024-04-01", title: "Fiche de synthèse", className: 'nonconforme' },
+                { id: 5, group: 4, content: "Démarche Administrative", start: "2024-05-01", title: "Démarche administrative", className: 'conforme' },
+                { id: 6, group: 2, content: "Démarche", start: "2024-01-01", title: "Démarche", className: 'conforme' },
+                { id: 7, group: 4, content: "Administrative", start: "2024-06-01", title: "Administrative", className: 'conforme' },
+                { id: 8, group: 1, content: "Bilan Intermédiaire", start: "2024-02-15", title: "Bilan intermédiaire", className: 'conforme' },
+                { id: 9, group: 3, content: "Fiche de Synthèse Année 1", start: "2024-07-01", title: "Fiche de synthèse - Année 1", className: 'nonconforme' },
+                { id: 10, group: 2, content: "Entretien 6 mois", start: "2024-07-15", title: "Entretien 6 mois", className: 'conforme' },
+                { id: 11, group: 4, content: "Démarche Post-Stage", start: "2024-08-01", title: "Démarche post-stage", className: 'conforme' },
+                { id: 12, group: 1, content: "Bilan de mi-parcours", start: "2024-09-01", title: "Bilan de mi-parcours", className: 'nonconforme' },
+                { id: 13, group: 3, content: "Fiche de Synthèse Année 2", start: "2024-11-01", title: "Fiche de synthèse - Année 2", className: 'conforme' },
+                { id: 14, group: 2, content: "Entretien Annuel 2", start: "2024-12-01", title: "Entretien annuel 2", className: 'conforme' },
+                { id: 15, group: 4, content: "Démarche Fin de Parcours", start: "2024-12-15", title: "Démarche fin de parcours", className: 'nonconforme' },
+                { id: 16, group: 1, content: "Bilan de Fin de Stage", start: "2024-10-01", title: "Bilan de fin de stage", className: 'conforme' },
+                { id: 17, group: 4, content: "Démarche Certification", start: "2024-09-01", title: "Démarche certification", className: 'conforme' },
+                { id: 18, group: 2, content: "Entretien de Revue de Carrière", start: "2024-11-15", title: "Entretien de revue de carrière", className: 'nonconforme' },
+                { id: 19, group: 1, content: "Début de projet", start: "2024-01-05", title: "Jalon de début", className: 'jalon' },
+                { id: 20, group: 5, content: "Période d’intégration", start: "2024-01-01", end: "2024-02-01", title: "Période d’intégration", className: 'dureeLong' },
+                { id: 21, group: 5, content: "Contrat de travail", start: "2024-01-01", end: "2024-03-01", title: "Contrat de travail", className: 'dureeLong' },
+                { id: 22, group: 5, content: "Contrat de travail", start: "2024-04-01", end: "2024-05-01", title: "Contrat de travail", className: 'dureeLong' },
+                { id: 23, group: 5, content: "Contrat de travail", start: "2024-06-01", end: "2024-09-01", title: "Contrat de travail", className: 'dureeLong' },
+                { id: 24, group: 3, content: "", start: "2024-04-05", title: "Ne pas oublier", className: 'jalon' },
+            ];
+        
+            // Traitement des types (point/range) et tooltip enrichi
+ // 1. Tu prépares tes items filtrables depuis rawItems
+const allItems = new vis.DataSet(
+    rawItems.map(item => {
+        const isJalon = item.className === 'jalon';
+        const type = item.end === 'box';  // Attention: ici tu veux vérifier quelque chose ?
+        return {
+            ...item,
+            type,
+            title: `<strong>${item.title}</strong><br>${item.start}${item.end ? ' → ' + item.end : ''}<br>${item.content}`
+        };
+    })
+);
+
+// 2. Tu crées un autre DataSet pour afficher uniquement ce qu'on veut
+const displayedItems = new vis.DataSet();
+displayedItems.add(allItems.get());
+
+// 3. Options classiques
+const options = {
+    stack: false,
+    groupOrder: 'id',
+    horizontalScroll: true,
+    zoomable: true,
+    showCurrentTime: false,
+    tooltip: { followMouse: true, delay: 30 },
+    margin: { item: 10, axis: 5 }
+};
+
+// 4. Crée UNE SEULE timeline
+const timeline = new vis.Timeline(container, displayedItems, groups, options);
+
+// 5. Gestion du panneau de détails
+timeline.on('select', function (properties) {
+    const item = displayedItems.get(properties.items[0]);
+    if (item) {
+        const panel = document.getElementById('details-panel');
+        document.getElementById('details-title').textContent = item.title;
+        document.getElementById('details-description').textContent = `Description de l'action : ${item.content}`;
+        panel.style.display = 'block';
+    }
+});
+
+// 6. Fonction qui applique les filtres
+function applyFilters() {
+    const activeGroups = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
+        .map(input => parseInt(input.dataset.group));
+
+    const filteredItems = allItems.get({
+        filter: item => activeGroups.includes(item.group)
+    });
+
+    displayedItems.clear();
+    displayedItems.add(filteredItems);
+}
+
+// 7. Lier la fonction aux filtres
+const filters = document.querySelectorAll('.filter-checkbox');
+filters.forEach(filter => {
+    filter.addEventListener('change', applyFilters);
+});
+
+
+
+              // Implémentation des groupes collapsibles
+            //   document.querySelectorAll('.group-collapsible').forEach(group => {
+            //     group.addEventListener('click', function() {
+            //         const content = this.nextElementSibling;
+            //         if (content.style.display === 'none') {
+            //             content.style.display = 'block';
+            //         } else {
+            //             content.style.display = 'none';
+            //         }
+            //     });
+            // });
+
+
+                     // Fonction de zoom
+            // const zoomSlider = document.getElementById('zoom-slider');
+            // zoomSlider.addEventListener('input', function() {
+            //     const zoomFactor = parseInt(zoomSlider.value);
+            //     const range = timeline.getWindow();
+            //     timeline.setWindow({
+            //         start: new Date(range.start.getTime() * zoomFactor),
+            //         end: new Date(range.end.getTime() * zoomFactor)
+            //     });
+            // });
+        });
+        </script>
+        
+</body>
+</html>

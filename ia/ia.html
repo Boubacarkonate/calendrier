@@ -1,0 +1,878 @@
+<script>
+	$(document).ready(function() {
+		function envoyerIA() {
+			alert("ENVOYER");
+		}
+		// Fonction pour envoyer la question et récupérer la réponse
+		function ajaxEnvoyerIA() {
+			$("#tareponse").val("");
+			$("#iaenvoyer").prop("disabled", true);
+			startPlaceholderLoading();
+			let question = $("#taquestion").val();
+			let K = $("#IAK").val();
+
+			$.ajax({
+				type: "POST",
+				url: "/ia/interroge",
+				dataType: "json",
+				data: {
+					question: question,
+					K: K
+				},
+				success: function(data) {
+					$("#tareponse").val(data.reponse);
+
+					if (data.reponse && data.reponse.trim()) {
+						$("#copy-tareponse").show();
+
+						$("#copy-tareponse").off("click").on("click", function() {
+							navigator.clipboard.writeText(data.reponse).then(() => {
+								alert("Réponse copiée !");
+							});
+						});
+					}
+
+
+					$("#taquestion").val(""); //efface la valeur de #taquestion à la reception de la réponse
+
+				},
+				error: function(resultat, statut, erreur) {
+					console.error(resultat, statut, erreur);
+					alert("Erreur");
+					$("#tareponse").val("Erreur lors de l'envoi.");
+				},
+				complete: function() {
+					$("#iaenvoyer").prop("disabled", false);
+					stopPlaceholderLoading();
+				}
+			});
+		}
+
+
+		// Fonction pour l'animation de chargement de la réponse
+		let loadingInterval;
+
+		function startPlaceholderLoading() {
+			let dots = 0;
+			loadingInterval = setInterval(function() {
+				dots = (dots + 1) % 4;
+				let placeholderText = 'Chargement de la réponse ' + '.'.repeat(dots);
+				$("#tareponse")
+					.attr("placeholder", placeholderText)
+					.addClass("loading");
+			}, 500);
+		}
+
+		function stopPlaceholderLoading() {
+			clearInterval(loadingInterval);
+			$("#tareponse")
+				.attr("placeholder", "La réponse s'affichera ici...")
+				.removeClass("loading");
+		}
+
+
+		// Ajout du prompt dans la sidebar + tooltip au hover
+		$("#iaenvoyer").on("click", function(e) {
+			e.preventDefault();
+
+			// Supprimer un ancien bouton s'il existe
+			$(".container-reponse .copy-button").remove();
+
+
+
+			let questionText = $("#taquestion").val().trim();
+			if (questionText !== "") {
+				const $textSpan = $("<span>")
+					.addClass("prompt-text")
+					.text(questionText);
+
+				const $closeButton = $("<span>")
+					.addClass("prompt-close")
+					.text("×")
+					.on("click", function() {
+						const tooltipInstance = bootstrap.Tooltip.getInstance($newPrompt[0]);
+						if (tooltipInstance) {
+							tooltipInstance.dispose();
+						}
+						$(this).closest(".prompt").fadeOut(200, function() {
+							$(this).remove();
+						});
+					});
+
+
+				const $newPrompt = $("<div>")
+					.addClass("prompt")
+					.attr("data-bs-toggle", "tooltip")
+					.attr("data-bs-placement", "right")
+					.attr("data-bs-title", questionText)
+					.append($textSpan)
+					.append($closeButton);
+
+				$(".sidebar-prompt").append($newPrompt);
+
+				new bootstrap.Tooltip($newPrompt[0]);
+
+				ajaxEnvoyerIA();
+			}
+		});
+
+
+		// Ajouter l'événement pour le bouton copier de #taquestion
+		$("#copy-taquestion").on("click", function() {
+			const questionText = $("#taquestion").val();
+			$(this).css({
+				"top": "-10px"
+			});
+			navigator.clipboard.writeText(questionText).then(() => {
+				alert("Question copiée !");
+
+			});
+		});
+
+
+		// Au clique, le prompt de la sidebar s'affche dans #taquestion
+		$(".sidebar-prompt").on("click", ".prompt", function(e) {
+			if ($(e.target).hasClass("prompt-close")) return;
+
+			const questionText = $(this).find(".prompt-text").text().trim();
+			$("#taquestion").val(questionText);
+		});
+	});
+</script>
+
+
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/ia.css" />
+<main class="ia-container">
+	<input id="IAK" type="hidden" value="<?php echo $this->K ?>" />
+	<h4 class="ia-container-title">Assistant Virtuel</h4>
+	<div class="principal">
+		<div class="sidebar-prompt">
+			<h3 class="titre-prompt">Mes Prompts</h3>
+		</div>
+		<div class="ia-container-contenu">
+			<div class="container-question">
+				<textarea id="taquestion" placeholder="Posez moi une question" rows="5"></textarea>
+				<button type="button" id="iaenvoyer" class="btn btn-secondary btn-sm w-auto mx-auto">Envoyer</button>
+				<button id="copy-taquestion" class="copy-button copy-button-taquestion"><i class="fa-regular fa-copy"></i> Copier</button>
+			</div>
+			<div class="container-reponse">
+				<textarea id="tareponse" placeholder="La réponse s'affichera ici..." rows="14"></textarea>
+				<button id="copy-tareponse" class="copy-button copy-button-tareponse"><i class="fa-regular fa-copy"></i> Copier</button>
+			</div>
+		</div>
+	</div>
+</main>
+
+<style>
+  .ia-container {
+
+position: relative;
+/* margin: 10px auto; */
+height: calc(100% - 60px);
+width: 100%;
+border-bottom: 1px solid #c4c4c4;
+border-radius: 5px;
+-webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+}
+.ia-container-contenu {
+display: flex;
+flex-direction: column;
+align-items: center;
+height: 100%;
+  flex: 1;
+  /* padding: 20px; */
+  box-sizing: border-box;
+}
+
+.ia-container:before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 8px;
+background: #c4e17f;
+border-radius: 5px 5px 0 0;
+background-image: linear-gradient(to right, #c4e17f, #c4e17f 12.5%, #f7fdca 12.5%, #f7fdca 25%, #fecf71 25%, #fecf71 37.5%, #f0776c 37.5%, #f0776c 50%, #db9dbe 50%, #db9dbe 62.5%, #c49cde 62.5%, #c49cde 75%, #669ae1 75%, #669ae1 87.5%, #62c2e4 87.5%, #62c2e4);
+}
+.ia-container-title {
+padding: 25px 25px 17px;
+line-height: 35px;
+font-size: 40px;
+font-weight: 200;
+letter-spacing: 0.5px;
+color: #264367;
+text-align: center;
+text-shadow: 0 1px rgba(255, 255, 255, 0.75);
+background: #f7f7f7;
+}
+.ia-container textarea {
+font-size: 14px;
+line-height: 1.5;
+text-align: left;
+color: #040505;
+-webkit-appearance: none;
+-moz-appearance: none;
+appearance: none;
+/* height: 300px; */
+resize: none;
+border: 0.5px solid #ccc;
+background-color: white;
+background-repeat: no-repeat;
+padding: 10px;
+width: 75%;
+border-radius: 20px;
+box-sizing: border-box;
+}
+#taquestion {
+/* height: 150px;
+                                                                                                                max-height: 300px; */
+margin-bottom: 5px;
+resize: vertical;
+  padding: 3% 1%;
+  width: 100%;
+}
+.ia-container-contenu input[type=button] {
+width: 100px;
+}
+#tareponse {
+margin-top: 3%;
+  width: 100%;
+  padding: 3% 1%;
+  background-color: #f1f1f1;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar-prompt {
+  width: 260px;
+  min-width: 200px;
+  margin-left: 10px;
+  background-color: #f7f7f7;
+  padding: 20px;
+  overflow-y: auto;
+  height: calc(100% - 100px);
+  box-sizing: border-box;
+  border-radius: 0 0 0 5px;
+}
+
+.titre-prompt {
+  font-size: 20px;
+  font-weight: 300;
+  color: #264367;
+}
+
+.prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #264367;
+  cursor: pointer;
+  transition: background 0.3s;
+  gap: 10px;
+}
+
+.prompt-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.prompt-close {
+  color: #999;
+  font-size: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.prompt-close:hover {
+  color: #333;
+}
+
+.prompt:hover {
+  background-color: #d1d5db;
+}
+
+.principal {
+  display: flex;
+  height: 100%;
+}
+
+#tareponse.loading {
+  background-color: #fff3cd;
+
+}
+
+.placeholder-tareponse {
+  color: #999;
+  font-style: italic;
+}
+
+/* Ajout d'une animation sur le texte du placeholder */
+@keyframes placeholderBlink {
+  0% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+#tareponse.loading::placeholder {
+  font-style: italic;
+  animation: placeholderBlink 1s infinite;
+
+}
+
+.container-question {
+  position: relative;
+  width: 75%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.container-reponse {
+  position: relative;
+  width: 75%;
+  /* display: flex;
+            justify-content: center;
+            flex-direction: column; */
+}
+
+
+.copy-button {
+  margin-top: 10px;
+  cursor: pointer;
+  position: absolute;
+  background-color: transparent;
+  color: #6c757d;
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  z-index: 10;
+  transition: background-color 0.3s ease;
+}
+
+.copy-button:hover {
+  color: #495057;
+}
+
+.copy-button-taquestion {
+  top: -10px;
+  right: 15px;
+}
+
+.copy-button-tareponse {
+  /* position: absolute; */
+  top: 22px;
+  right: 15px;
+}
+  /* #copy-tareponse {
+    display: none;
+} */
+</style>
+
+
+
+
+<!--version définitive-->
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/ia.css" />
+<script src="/js/ia/ia.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<main>
+	<input id="IAK" type="hidden" value="<?= $this->K ?>" />
+	<div class="principal">
+		<div class="sidebar-prompt">
+			<h5 class="mb-3 fw-semibold titre-prompt"><i class="bi bi-lightbulb"></i> Mes suggestions</h5>
+			<div class="prompt" data-question="Comment améliorer la communication dans une équipe ?">
+				<span class="prompt-text">Synthèse de suivi pour un bénéficiaire</span>
+			</div>
+			<div class="prompt" data-question="Quels sont les droits du salarié en télétravail ?">
+				<span class="prompt-text">Quels sont les droits </span>
+			</div>
+			
+			<div class="accordion" id="accordionPrompts">
+				<!-- Catégorie 1 -->
+				<div class="accordion-item">
+					<h2 class="accordion-header">
+						<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+							Communication
+						</button>
+					</h2>
+					<div id="collapseOne" class="accordion-collapse collapse">
+						<div class="accordion-body">
+							<div class="prompt mb-2" data-question="Comment organiser une réunion efficace ?">
+								<span class="prompt-text">Comment organiser une réunion efficace ?</span>
+							</div>
+							<div class="prompt" data-question="Comment donner un feedback constructif ?">
+								<span class="prompt-text">Comment donner un feedback constructif ?</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Catégorie 2 -->
+				<div class="accordion-item">
+					<h2 class="accordion-header">
+						<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+							Droit du travail
+						</button>
+					</h2>
+					<div id="collapseTwo" class="accordion-collapse collapse">
+						<div class="accordion-body">
+							<div class="prompt mb-2" data-question="Quelles sont les obligations en télétravail ?">
+								<span class="prompt-text">Obligations en télétravail</span>
+							</div>
+							<div class="prompt" data-question="Quels sont les avantages du CDI ?">
+								<span class="prompt-text">Avantages du CDI</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="ia-container-contenu">
+			<div class="btn-container" style="display:none;"> <!-- Les boutons sont cachés au début -->
+				<button id="copy-tareponse" class="copy-button copy-button-tareponse">
+					<i class="fa-regular fa-copy"></i> Copier
+				</button>
+				<button id="generate-pdf" style="display:none;">
+					<i class="fa-regular fa-circle-down"></i> Télécharger
+				</button>
+			</div>
+			<textarea id="tareponse" placeholder="La réponse s'affichera ici..."></textarea>
+		</div>
+
+	</div>
+</main>
+<script>
+	$(document).ready(function() {
+
+    
+function ajaxEnvoyerIA(question) {
+	$("#tareponse").val("");
+	startPlaceholderLoading();
+
+	let K = $("#IAK").val();
+
+	$.ajax({
+		type: "POST",
+		url: "/ia/interroge",
+		dataType: "json",
+		data: {
+			question: question,
+			K: K
+		},
+		success: function(data) {
+			$("#tareponse").val(data.reponse);
+
+			if (data.reponse && data.reponse.trim()) {
+				$(".btn-container").show();  
+				$("#copy-tareponse").show();
+				$("#generate-pdf").show();
+
+				$("#copy-tareponse").off("click").on("click", function() {
+					navigator.clipboard.writeText(data.reponse).then(() => {
+						alert("Réponse copiée !");
+					});
+				});
+			}
+		},
+		error: function(resultat, statut, erreur) {
+			console.error(resultat, statut, erreur);
+			alert("Erreur");
+			$("#tareponse").val("Erreur lors de l'envoi.");
+		},
+		complete: function() {
+			stopPlaceholderLoading();
+		}
+	});
+}
+
+$("#generate-pdf").on("click", function() {
+	generatePDF();
+});
+
+function generatePDF() {
+	const { jsPDF } = window.jspdf;
+	const doc = new jsPDF();
+
+	const text = document.getElementById("tareponse").value || "Pas de réponse";
+
+	const margin = 10;
+	const pageWidth = doc.internal.pageSize.getWidth() - 2 * margin;
+
+	doc.setFontSize(12);
+	const splittedText = doc.splitTextToSize(text, pageWidth);
+
+	doc.text(splittedText, margin, 20);
+	doc.save("reponse.pdf");
+}
+
+
+
+let loadingInterval;
+
+function startPlaceholderLoading() {
+	let dots = 0;
+	loadingInterval = setInterval(function() {
+		dots = (dots + 1) % 4;
+		let placeholderText = 'Chargement de la réponse ' + '.'.repeat(dots);
+		$("#tareponse").attr("placeholder", placeholderText).addClass("loading");
+	}, 500);
+}
+
+function stopPlaceholderLoading() {
+	clearInterval(loadingInterval);
+	$("#tareponse").attr("placeholder", "La réponse s'affichera ici...").removeClass("loading");
+}
+
+// Clic sur prompt : envoyer directement le texte
+$(".sidebar-prompt").on("click", ".prompt", function() {
+	const question = $(this).data("question");
+	if (question) ajaxEnvoyerIA(question);
+});
+
+
+
+// const prompts = [{
+//         id: 1,
+//         title: "Synthèses",
+//         items: [{
+//                 id: 1,
+//                 promptTitle: "Synthèse de suivi pour un bénéficiaire en recherche d'emploi"
+//             },
+//             {
+//                 id: 2,
+//                 promptTitle: "Synthèse d'entretien d'orientation pour un jeune en décrochage"
+//             }
+
+//         ]
+//     },
+//     {
+//         id: 2,
+//         title: "Courriers administratifs",
+//         items: [{
+//                 id: 1,
+//                 promptTitle: "Courrier d'information de reprise d'activité à Pôle emploi"
+//             },
+//             {
+//                 id: 2,
+//                 promptTitle: "Courrier de non-présentation à une convocation"
+//             },
+
+//         ]
+//     },
+//     {
+//         id: 3,
+//         title: "Demandes d'aides",
+//         items: [{
+//                 id: 1,
+//                 promptTitle: "Demande de financement pour une formation professionnelle"
+//             },
+//             {
+//                 id: 2,
+//                 promptTitle: "Demande d'aide financière pour un permis de conduire"
+//             },
+
+//         ]
+//     },
+//     {
+//         id: 4,
+//         title: "Lettres de projet ou d'insertion",
+//         items: [{
+//                 id: 1,
+//                 promptTitle: "Lettre de motivation pour intégrer une action d'insertion"
+//             },
+//             {
+//                 id: 2,
+//                 promptTitle: "Présentation d'un projet de création d'entreprise"
+//             }
+
+//         ]
+//     }
+// ];
+
+// const accordion = document.getElementById("accordionPanelsStayOpenExample");
+
+// // On vide avant d'ajouter (au cas où)
+// accordion.innerHTML = "";
+
+// prompts.forEach((element, index) => {
+//     accordion.innerHTML += `
+//         <div class="accordion-item">
+//             <h2 class="accordion-header" id="heading${index}">
+//                 <button class="accordion-button ${index !== 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapse${index}" aria-expanded="true" aria-controls="panelsStayOpen-collapse${index}">
+//                     ${element.title}
+//                 </button>
+//             </h2>
+//             <div id="panelsStayOpen-collapse${index}" class="accordion-collapse collapse show" aria-labelledby="heading${index}" data-bs-parent="#accordionPanelsStayOpenExample">
+//                 <div class="accordion-body">
+//                     <ul>
+//                         ${element.items.map(item => `<li>${item.promptTitle}</li>`).join('')}
+//                     </ul>
+//                 </div>
+//             </div>
+//         </div>
+//     `;
+// });
+
+
+
+
+});
+</script>
+<style>
+	/* .ia-container {
+  position: relative;
+    height: 100%;
+      width: 100%;
+  border-bottom: 1px solid #c4c4c4;
+  border-radius: 5px;
+  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+}
+*/
+.ia-container-contenu {
+  flex-grow: 1;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* padding: 20px;
+                                                                                                                                                                          overflow: hidden; */
+    /* Empêche le scroll à l'intérieur de cette section */
+}
+/* .ia-container:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: #c4e17f;
+  border-radius: 5px 5px 0 0;
+  background-image: linear-gradient(to right, #c4e17f, #c4e17f 12.5%, #f7fdca 12.5%, #f7fdca 25%, #fecf71 25%, #fecf71 37.5%, #f0776c 37.5%, #f0776c 50%, #db9dbe 50%, #db9dbe 62.5%, #c49cde 62.5%, #c49cde 75%, #669ae1 75%, #669ae1 87.5%, #62c2e4 87.5%, #62c2e4);
+}
+*/
+.ia-container textarea {
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  color: #040505;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* height: 300px; */
+  resize: none;
+  border: 0.5px solid #ccc;
+  background-color: white;
+  background-repeat: no-repeat;
+  padding: 10px;
+  width: 75%;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+#tareponse {
+  height: 100%;
+  width: 100%;
+  margin-left: 1%;
+  padding: 2% 2%;
+  background-color: transparent;
+  border: none;
+  color: #1e293b;
+  overflow-y: visible;
+  font-size: 16px;
+  line-height: 1.6;
+  box-sizing: border-box;
+  resize: none;
+  transition: all 0.3s ease-in-out;
+  margin: auto;
+  text-align: justify;
+  /* border: 1px solid #ddd;
+  border-radius: 5px; */
+}
+
+.sidebar-prompt {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  min-width: 300px;
+  max-width: 350px;
+  width: 350px;
+
+
+}
+
+.titre-prompt {
+  font-size: 25px;
+  padding-bottom: 5%;
+  font-weight: 300;
+  color: #0e3d75;
+}
+
+.prompt {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 5%;
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 10px;
+  /* font-size: 14px; */
+  color: #0e3d75;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  gap: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.prompt-close {
+  color: #999;
+  font-size: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.prompt-close:hover {
+  color: #333;
+}
+
+.prompt:hover {
+  background-color: #d1d5db;
+}
+
+.principal {
+  display: flex;
+  height: 81vh;
+  overflow-x: hidden;
+  overflow-y: hidden;
+
+  flex-direction: row;
+}
+
+#tareponse.loading {
+  background-color: #fff3cd;
+
+}
+
+.placeholder-tareponse {
+  color: #999;
+  font-style: italic;
+}
+
+/* Ajout d'une animation sur le texte du placeholder */
+@keyframes placeholderBlink {
+  0% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+#tareponse.loading::placeholder {
+  font-style: italic;
+  animation: placeholderBlink 1s infinite;
+}
+
+.btn-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+
+#copy-tareponse {
+  cursor: pointer;
+  background-color: transparent;
+  color: #6c757d;
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  z-index: 10;
+  transition: background-color 0.3s ease;
+}
+
+#copy-tareponse:hover {
+  color: #495057;
+}
+
+#generate-pdf {
+  cursor: pointer;
+  background-color: transparent;
+  color: #6c757d;
+  padding: 5px 40px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: none;
+  z-index: 10;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#generate-pdf:hover {
+  color: #495057;
+}
+
+/* .accordion {
+  --bs-accordion-bg: transparent !important;
+  --bs-accordion-border-color: none !important;
+} */
+
+.accordion-button {
+  background-color: #f8f9fa;
+  color: #0e3d75;
+  font-weight: 600;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #e9ecef;
+  color: #0e3d75;
+}
+.accordion-body {
+  padding: 10px 15px;
+}
+.accordion-item {
+  border: none;
+}
+
+</style>

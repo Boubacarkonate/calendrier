@@ -11,8 +11,8 @@ let saveEventBtn = document.getElementById('save-event');
 //création d'un événenement en dure en js. Voir la propriété events.
 let eventCreated = [{
     title: 'exemple événement créé',
-    start: '2025-03-23 09:00:00',
-    end: '2025-03-25 09:00:00',
+    start: '2025-04-23 09:00:00',
+    end: '2025-04-25 09:00:00',
     backgroundColor: 'yellow',
     color: 'red'
 }]

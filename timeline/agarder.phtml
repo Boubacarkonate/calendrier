@@ -1,0 +1,248 @@
+<?php
+class NR_Uxwidgets_Fleche extends NR_Uxwidgets_AbstractWidget
+{
+    public function __construct($params)
+    {
+        parent::__construct($params);
+    }
+
+    public function getInfosContenu()
+    {
+        return [
+            'template' => ucfirst($this->_widget->getType()),
+            'data'     => [
+                "contenu" => $this->getDATAdedie()
+            ]
+        ];
+    }
+
+    private function getDATAdedie()
+    {
+        $fleche = new Application_Model_Fleche($this->_widget->getK(), '');
+        // Récupère les fiches avec durée
+        $fichesAvecDuree = $fleche->getFichesAvecDuree();
+
+        // Regroupe les fiches par typeK et typefiche pour zoneduree
+        $arr_typefiche_duree = [];
+        foreach ($fichesAvecDuree as $fiche) {
+            $typeK = $fiche['typeK'];
+            $typefiche = $fiche['typefiche'];
+            $arr_typefiche_duree[$typeK][$typefiche] = [
+                "typeK"            => $typeK,
+                "typefiche"        => $typefiche,
+                "nom_affiche"      => $fiche['nom_affiche'] ?? '',
+                "typefiche_date_debut"   => $fiche['typefiche_date_debut'] ?? null,
+                "typefiche_date_debutFR" => $fiche['typefiche_date_debutFR'] ?? null,
+                "typefiche_date_fin"     => $fiche['typefiche_date_fin'] ?? null,
+                "typefiche_date_finFR"   => $fiche['typefiche_date_finFR'] ?? null,
+                "affichagecoupdoeil"     => $fiche['affichagecoupdoeil'] ?? null,
+            ];
+        }
+
+        return [
+            "projets"     => $fichesAvecDuree,
+            "typefichesK" => $fleche->getGroupes(),
+            "zoneduree"   => $arr_typefiche_duree,
+        ];
+    }
+}
+
+
+
+
+    public function getdataflecheAction(){
+        $params     = $this->communAjax();
+        $Fleche     = new NR_Uxfiche_Getdata($params['K'], $params['domaine']);
+        $dataFleche = $Fleche->getData();
+        echo json_encode($dataFleche);
+        return true;
+    }
+
+    public function getDonneesFlecheAction()
+    {
+        $this->_helper->layout->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $request = $this->getRequest();
+        $params = $request->getParams();
+
+        if (!isset($params['K']) || !isset($params['domaine'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Paramètres K et domaine manquants']);
+            return;
+        }
+
+
+        $widget = new NR_Uxwidgets_Fleche([
+            'K'       => $params['K'],
+            'domaine' => $params['domaine'],
+        ]);
+
+        $data = $widget->getInfosContenu();
+
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data['data']['contenu'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+
+
+        public function indexAction(){
+        if(empty($this->params['nom'])){
+            $this->params['nom'] = $this->nomdeft;
+        }
+        $this->view->widgets = [];
+        if (isset($this->params['brique'])) {
+            $this->setupContenuBrique($this->params['nom'], $this->params['brique']);
+        } else {
+            $widgets = $this->amm->getContenuOnglet($this->params['nom'], $this->typeK);
+            if (empty($widgets)) {
+                $this->setupContenuBrique($this->params['nom'], null);
+            }
+            foreach($widgets as &$widget){
+                $classNameW = "NR_Uxwidgets_".$widget["objwidget"]->class_widget;
+                if(method_exists($classNameW, "getHTML")){
+                    $widget["K"]           = $this->K;
+                    $obj                   = new NR_Uxwidgets_Widget($widget, 'uxtdbk');
+                    $OWidget               = new $classNameW($obj);
+                    $this->view->widgets[] = $OWidget;
+                } else {
+                    NR_Utilitaires::debugDump("ERREUR, VERIFIER : ".$classNameW." semble ne pas exister");
+                }
+            }
+            unset($widget);
+        }
+
+        $params = array_intersect_key($this->params, array_flip(['N', 'K', 'nom', 'brique']));
+        setcookie("DERNTDBK", json_encode($params), path: '/', httponly: true);
+
+        $this->view->title   = $this->getTitle($this->Identification);
+        $this->view->ariadne = [
+            new NR_Fildariane_Maillon('Tableaux de bord', '/uxtuile'),
+            new NR_Fildariane_Maillon($this->Identification),
+        ];
+        if (isset($this->params['N'])) {
+            $model = new Application_Model_Fiche();
+            $fiche = $model->getLibelleN($this->params['N']);
+            $this->view->ariadne[1]->dropdown = [new NR_Fildariane_Maillon($fiche, '/fiche?N=' . $this->params['N'])];
+        }
+        if (isset($this->view->briqueactif)) {
+            $this->view->ariadne[] = new NR_Fildariane_Maillon($this->view->briqueactif['nom_affiche'] ?? '');
+        }
+
+        $this->view->K                 = $this->K;
+        $cardProfilInfos               = new Application_Model_Uxtdbk_Cartouche($this->K, $this->typeK);
+        $this->view->cardProfilInfos   = $cardProfilInfos->getInfoCartouche();
+        $this->view->documentJoints    = $this->amm->getDocumentsJoints($this->K);
+        $objBouton                     = new NR_Uxtdbk_Bouton($this->typeK, $this->K, $this->session->user, $this->verrouSortie , '/uxtdbk/imprimeroptions?K=' . $this->K);
+        $this->view->boutonsCardProfil = $objBouton->getBoutons();
+        $this->view->typeKDestinations = $objBouton->getTypeKDestinations();
+        $this->view->conversionFicheUrl = $objBouton->getConversionFicheUrl();
+        $this->view->libelleNRA         = $objBouton->getLibelleNRA();
+
+        // $K = new Application_Model_Fleche($this->K);
+
+        // // Groupes
+        // // $this->view->groupes = $K->getGroupes();
+
+        // // Fiches simples +duree
+        // $fichesSimples = $K->getFiches();
+        // $fichesAvecDuree = $K->duree($fichesSimples);
+        // $this->view->fiches = $fichesAvecDuree;
+
+        // // Fiches d'action collective + durée
+        // $fichesCollectives = $K->actionCollective();
+        // $fichesCollectivesAvecDuree = $K->duree($fichesCollectives);
+        // $this->view->fichesCollectives = $fichesCollectivesAvecDuree;
+
+        // // Regroupement de toutes les fiches
+        // $this->view->toutesLesFiches = array_merge($fichesAvecDuree, $fichesCollectivesAvecDuree);
+    }
+
+    public function flecheAction()
+    {
+        $K = new Application_Model_Fleche($this->K);
+
+        // // Groupes
+        // $this->view->groupes = $K->getGroupes();
+
+        // // Fiches simples +duree
+        $fichesSimples = $K->getFiches();
+        $fichesAvecDuree = $K->duree($fichesSimples);
+        $this->view->fiches = $fichesAvecDuree;
+
+        // // Fiches d'action collective + durée
+        $fichesCollectives = $K->actionCollective();
+        $fichesCollectivesAvecDuree = $K->duree($fichesCollectives);
+        $this->view->fichesCollectives = $fichesCollectivesAvecDuree;
+
+        // // Regroupement de toutes les fiches
+        $this->view->toutesLesFiches = array_merge($fichesAvecDuree, $fichesCollectivesAvecDuree);
+    }
+
+
+
+
+
+
+
+
+    <!-- Liens vis.js -->
+<link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
+<script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+
+<!-- Conteneur de la timeline -->
+<div id="visualization" style="height: 500px;"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log(1);
+
+        // Appel AJAX pour récupérer les données
+        fetch(`/uxtdbk/getDonneesFlecheAction/K/${K}/domaine/${domaine}`)
+
+            .then(response => response.json())
+            .then(data => {
+                console.log('Données reçues:', data);
+
+                const projets = data.projets || [];
+                const groupsData = data.zoneduree || [];
+
+                // Construction des items pour vis.js
+                const items = projets.map(fiche => ({
+                    id: fiche.N,
+                    content: fiche.titre_action,
+                    start: fiche.typefiche_date_debut,
+                    end: fiche.typefiche_date_fin,
+                    group: fiche.typefiche,
+                    title: fiche.typefiche_nomaffiche,
+                    className: "timeline-item"
+                }));
+
+                // Construction des groupes
+                const groups = [];
+                for (const groupKey in groupsData) {
+                    const groupObj = groupsData[groupKey];
+                    for (const typefiche in groupObj) {
+                        const typeData = groupObj[typefiche];
+                        groups.push({
+                            id: typefiche,
+                            content: typeData.nom_affiche
+                        });
+                    }
+                }
+
+                // Création de la timeline vis.js
+                const container = document.getElementById('visualization');
+                const timeline = new vis.Timeline(container, new vis.DataSet(items), new vis.DataSet(groups), {
+                    stack: true,
+                    showCurrentTime: true,
+                    zoomMin: 1000 * 60 * 60 * 24 * 30,
+                    zoomMax: 1000 * 60 * 60 * 24 * 365 * 5
+                });
+            })
+            .catch(error => {
+                console.error("Erreur AJAX :", error);
+            });
+    });
+</script>

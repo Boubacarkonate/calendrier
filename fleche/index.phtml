@@ -1,0 +1,1119 @@
+<style>
+.cont {
+    display: flex;
+    align-items: center;
+    height: 90%;
+    width: 100%;
+    overflow: hidden;
+
+}
+
+#timeline-widget {
+    flex: 1;
+
+}
+
+.fleche {
+    width: 60px;
+    /* height: 50%; */
+    background-color: rgba(var(--bs-dark-rgb), 1);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    flex-shrink: 0;
+    transition: height 0.3s ease;
+}
+
+
+/*timeline */
+
+
+.vis-foreground .vis-group {
+    border-bottom: 1px solid rgba(var(--bs-dark-rgb), 1) !important;
+}
+
+.vis-panel.vis-left,
+.vis-panel.vis-right,
+.vis-panel.vis-bottom {
+    border: 1px solid rgba(var(--bs-dark-rgb), 1) !important;
+}
+
+.vis-labelset .vis-label {
+    border: 1px solid rgba(var(--bs-dark-rgb), 1) !important;
+
+}
+
+.vis-inner {
+    color: rgba(var(--bs-dark-rgb), 1) !important;
+
+    font-size: 14px;
+}
+
+.vis-text {
+    color: rgba(var(--bs-dark-rgb), 1) !important;
+    font-size: 14px;
+}
+
+.point-item {
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    box-shadow: 1px 1px 2px black;
+}
+
+.point-couleur-337ab7 {
+    background-color: #337ab7;
+}
+
+.point-couleur-f00 {
+    background-color: #f00;
+}
+
+/* Ajoute dynamiquement les couleurs si nécessaire */
+
+
+/* 
+    .vis-item {
+        background-color: #d5ddf6;
+        border-color: rgb(248, 151, 208) !important;
+        border-width: 1px;
+        color: #1a1a1a;
+        display: inline-block;
+        position: absolute;
+        z-index: 1;
+    } */
+
+
+
+/*navbar */
+/* .projet-btn {
+        padding: 5px 10px;
+        background-color: #eee;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .projet-btn:hover {
+        background-color: #ddd;
+    }
+
+    #projets-navbar {
+        margin-bottom: 15px;
+    } */
+
+.navbar-container {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #ddd;
+    overflow-x: auto;
+}
+
+.projet-btn {
+    padding: 6px 12px;
+    border: none;
+    background-color: #3498db;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+}
+
+.projet-btn:hover {
+    background-color: #2980b9;
+}
+
+.projet-btn.active {
+    background-color: #2ecc71;
+}
+
+
+#timeline-loader {
+    position: absolute;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.85);
+    width: 100%;
+    top: 0;
+    left: 0;
+    text-align: center;
+    padding: 50px 0;
+    font-size: 18px;
+}
+
+.jalon-item {
+    cursor: default;
+}
+
+.projet-btn.active {
+    font-weight: bold;
+    background-color: #337ab7;
+    color: white;
+}
+
+a[tabindex="-1"] {
+    cursor: default !important;
+    text-decoration: none !important;
+    pointer-events: none !important;
+}
+</style>
+<link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
+<script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+<script src="<?php echo $this->baseUrl(); ?>/js/fleche.js"></script>
+<div id="uxtdbkLayout" data-k="<?php echo $this->data['k']; ?>"></div>
+
+<div id="projets-navbar" class="navbar-container">
+    <!-- 
+<input type="button" class="btn btn-primary" value="Tous les projets" />
+<?php foreach ($this->projets as $projet): ?>
+    <?php print_r($projet) ?>
+    <input type="button" class="btn btn-primary" value="<?= $projet['libelle'] ?>" data-projetId="<?= $projet['id'] ?>" />
+<?php endforeach ?> -->
+</div>
+
+<!-- <div class="dropdown" id="filters-dropdown" style="margin-bottom: 15px;">
+    <button
+        class="btn btn-sm btn-secondary dropdown-toggle"
+        type="button"
+        id="dropdownMenuButton"
+        data-bs-toggle="dropdown"
+        aria-expanded="false">
+        Filtres
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="padding: 10px; max-height: 300px; overflow-y: auto; min-width: 220px;">
+    </ul>
+</div> -->
+
+
+<div id="timeline-filters"></div>
+
+<div id="projets-infos" class="mt-3"></div>
+
+
+
+<!-- Timeline -->
+
+<div class="cont">
+    <div id="timeline-widget" class="border border-secondary"></div>
+    <div class="fleche"></div>
+</div>
+
+<div id="timeline-loader" class="d-none">
+    Chargement des données...
+</div>
+
+<script>
+// fleche.js
+window.addEventListener('DOMContentLoaded', () => {
+    let responseGlobal = null;
+
+    function renderTimelineFromResponse(response, projetId = null) {
+        responseGlobal = response;
+
+        console.log(response.groupes);
+        console.log(response.dates.minDate);
+        console.log(response.dates.maxDate);
+        console.log(response.jalons);
+        return;
+
+
+        const groupes = response.groupes1 || [];
+        const allFichesRaw = response.fiches || [];
+        const listeProjets = response.liste_projets || [];
+
+        const allFiches = projetId ?
+            allFichesRaw.filter(fiche => fiche._idProjet == projetId) :
+            allFichesRaw;
+
+        // console.log(response.projets);
+        // console.log(response.liste_projets);
+
+
+
+
+        // console.log("IDs des projets présents dans les fiches :", [...new Set(allFichesRaw.map(f => f._idProjet))]);
+
+        const groups = [];
+        const items = [];
+        let groupIdCounter = 1;
+        let itemIdCounter = 1;
+
+
+        function createItem({
+            fiche,
+            groupId,
+            type = 'point'
+        }) {
+            const start = fiche.typefiche_date_debut || fiche.date_action;
+            const end = fiche.typefiche_date_fin;
+            const couleur = fiche.couleur || '#337ab7';
+            const nomAffiche = fiche.nom_affiche || fiche.typefiche_nomaffiche || 'Sans titre';
+            const titre = fiche.titre_action || fiche.typefiche || 'Sans titre';
+
+            const isRange = type === 'range';
+            const dateLabel = isRange && end ? `${start} - ${end}` : start;
+
+            return {
+                id: itemIdCounter++,
+                type: type,
+                group: groupId,
+                content: `<a href="/fiche?N=${fiche.N}">${titre}</a>`,
+                start,
+                ...(isRange && {
+                    end
+                }),
+                title: `<strong>Fiche :</strong> ${nomAffiche}<br>
+            <strong>Titre :</strong> ${titre}<br>
+            <strong>Date :</strong> ${dateLabel}`,
+                style: `background-color: ${couleur}; color: white; font-size: 10px; text-shadow: 1px 1px 2px black; ${type === 'point' ? 'border-radius: 50%; padding: 1%;' : ''}`
+            };
+        }
+
+        // --- 1. Groupes classiques : fiches sans durée
+        groupes.forEach(ligne => {
+            const groupId = groupIdCounter++;
+            groups.push({
+                id: groupId,
+                content: ligne.nom_ligne
+            });
+
+            const fichesLigne = (ligne.fiches || []).filter(fiche => !projetId || fiche._idProjet ==
+                projetId);
+
+            fichesLigne.forEach(fiche => {
+                const hasDuration = fiche.typefiche_date_fin;
+                if (!hasDuration) {
+                    items.push(createItem({
+                        fiche,
+                        groupId,
+                        type: 'point'
+                    }));
+                }
+            });
+        });
+
+        // --- 2. Groupes pour fiches avec durée
+        const groupsByTypeK = {};
+        allFiches.forEach(fiche => {
+            const start = fiche.typefiche_date_debut || fiche.date_action;
+            const end = fiche.typefiche_date_fin;
+            if (!start || !end) return;
+
+            const typeK = fiche.nom_affiche || fiche.typefiche_nomaffiche || 'Autres';
+            if (!groupsByTypeK[typeK]) {
+                groupsByTypeK[typeK] = {
+                    id: groupIdCounter++,
+                    content: typeK,
+                    fiches: []
+                };
+            }
+            groupsByTypeK[typeK].fiches.push(fiche);
+        });
+
+        Object.values(groupsByTypeK).forEach(group => {
+            groups.push({
+                id: group.id,
+                content: group.content
+            });
+
+            group.fiches.forEach(fiche => {
+                items.push(createItem({
+                    fiche,
+                    groupId: group.id,
+                    type: 'range'
+                }));
+            });
+        });
+
+
+        listeProjets.forEach(projet => {
+            if (!Array.isArray(projet.jalons)) return;
+
+            const afficherJalons = !projetId || projet.id === projetId;
+            if (!afficherJalons) return;
+
+
+            const group = groups.find(g => g.content === projet.titre);
+            if (!group) return;
+
+            const groupId = group.id;
+
+            projet.jalons.forEach(jalon => {
+                items.push({
+                    id: `jalon-${jalon.id}`,
+                    group: groupId,
+                    content: `<span class="jalon-flag" title="${jalon.titre}">🚩</span>`,
+                    start: jalon.date,
+                    type: 'point',
+                    className: 'jalon-item',
+                    title: `<strong>Jalon :</strong> ${jalon.titre}<br><strong>Date :</strong> ${jalon.date}`
+                });
+            });
+        });
+
+
+        if (window.timeline) {
+            window.timeline.destroy();
+        }
+        const container = document.getElementById('timeline-widget');
+        if (!container) {
+            console.error('#timeline-widget manquant');
+            return;
+        }
+
+
+
+        window.timeline = new vis.Timeline(container);
+        const visGroups = new vis.DataSet(groups);
+        const visItems = new vis.DataSet(items);
+        window.timelineItems = items.slice();
+
+        window.timeline.setGroups(visGroups);
+        window.timeline.setItems(visItems);
+        window.timeline.setOptions({
+            stack: false,
+            horizontalScroll: true,
+            zoomKey: 'ctrlKey',
+            editable: false,
+            zoomable: true,
+            showCurrentTime: true,
+            tooltip: {
+                followMouse: true,
+                delay: 30
+            },
+            margin: {
+                item: 22,
+                axis: 5
+            },
+            align: "center",
+            locale: 'fr',
+        });
+
+    }
+
+    function setupProjetsNavbar(response, selectedProjetsIds = []) {
+        const projetsNavbar = document.getElementById('projets-navbar');
+        projetsNavbar.innerHTML = '';
+
+        // Bouton Tous les projets
+        const allBtn = document.createElement('button');
+        allBtn.textContent = 'Tous les projets';
+        allBtn.className = 'projet-btn' + (selectedProjetsIds.length === 0 ? ' active' : '');
+        allBtn.addEventListener('click', () => {
+            projetsNavbar.querySelectorAll('.projet-btn').forEach(btn => btn.classList.remove(
+                'active'));
+            allBtn.classList.add('active');
+            getDataTypefiches();
+        });
+        projetsNavbar.appendChild(allBtn);
+
+        // Boutons projets individuels
+        response.liste_projets.forEach(projet => {
+            const btn = document.createElement('button');
+            btn.textContent = projet.titre;
+            btn.className = 'projet-btn';
+            btn.dataset.projetId = projet.id;
+
+            btn.addEventListener('click', () => {
+                projetsNavbar.querySelectorAll('.projet-btn').forEach(b => b.classList.remove(
+                    'active'));
+                btn.classList.add('active');
+                getDataTypefiches([projet.id]);
+            });
+
+            projetsNavbar.appendChild(btn);
+        });
+    }
+
+    function getDataTypefiches(projetsIds = []) {
+        const k = $('#uxtdbkLayout').data('k');
+        console.log("Valeur de K :", k);
+        if (!k) {
+            $('#timeline-widget').text('Paramètre K manquant.');
+            return;
+        }
+
+        const postData = {
+            K: k,
+            projetId: null
+        };
+        if (Array.isArray(projetsIds) && projetsIds.length > 0) {
+            postData.projets_ids = projetsIds;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "/uxtdbk/getfleche",
+            dataType: "json",
+            data: postData,
+            success: function(response) {
+                setupProjetsNavbar(response, projetsIds);
+                renderTimelineFromResponse(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Erreur AJAX:', status, error);
+                $('#timeline-widget').text('Erreur de chargement des données. (' + xhr.status +
+                    ')');
+            }
+        });
+    }
+
+    $(document).ready(() => {
+        getDataTypefiches();
+
+    });
+
+    function ajusterHauteurFleche() {
+        const timeline = document.getElementById("timeline-widget");
+        const fleche = document.querySelector(".fleche");
+
+        if (timeline && fleche) {
+            const hauteurTimeline = timeline.offsetHeight;
+            fleche.style.height = (hauteurTimeline * 1.2) + "px";
+        }
+    }
+
+    ajusterHauteurFleche();
+
+    window.addEventListener("resize", ajusterHauteurFleche);
+
+    setTimeout(ajusterHauteurFleche, 1500);
+});
+</script>
+
+
+<!-- Fleche.php NR_widget -->
+<?php
+class NR_Uxwidgets_Fleche extends NR_Uxwidgets_AbstractWidget
+{
+    public function __construct($params)
+    {
+        parent::__construct($params);
+    }
+
+    public function getInfosContenu()
+    {
+        return [
+            'template' => ucfirst($this->_widget->getType()),
+            'data'     => ["contenu" => $this->getDATAdedie()]
+        ];
+    }
+
+    public function getDATAdedie()
+    {
+        $K = $this->_widget->getK();
+        $modelFleche = new Application_Model_Fleche($K);
+
+
+        $fichesAvecDuree = $modelFleche->getFichesAvecDuree();
+
+
+        $arr_typefiche_duree = [];
+        foreach ($fichesAvecDuree as $fiche) {
+            $typeK = $fiche['typeK'];
+            $typefiche = $fiche['typefiche'];
+            $arr_typefiche_duree[$typeK][$typefiche] = [
+                "typeK"            => $typeK,
+                "typefiche"        => $typefiche,
+                "couleur" => $fiche['couleur'],
+                "nom_affiche"      => $fiche['nom_affiche'] ?? '',
+                "typefiche_date_debut"   => $fiche['typefiche_date_debut'] ?? null,
+                "typefiche_date_debutFR" => $fiche['typefiche_date_debutFR'] ?? null,
+                "typefiche_date_fin"     => $fiche['typefiche_date_fin'] ?? null,
+                "typefiche_date_finFR"   => $fiche['typefiche_date_finFR'] ?? null,
+                "affichagecoupdoeil"     => $fiche['affichagecoupdoeil'] ?? null,
+            ];
+        }
+
+        return [
+            "projets"     => $fichesAvecDuree,
+            "typefichesK" => $modelFleche->getGroupes(),
+            "zoneduree"   => $arr_typefiche_duree,
+        ];
+    }
+}
+
+
+
+
+
+
+controller 
+   //     public function getflecheAction()
+    // {
+
+    //     // $params = $this->communAjax();
+
+
+    //     // $k = $params['K'];
+    //     // $idsProjetsFiltres = $params['projets_ids'];
+
+    //     // if (!$k) {
+    //     //     http_response_code(400);
+    //     //     echo json_encode(['error' => 'Paramètre K manquant']);
+    //     //     return;
+    //     // }
+
+    //     $this->_helper->layout->disableLayout();
+    //     $this->_helper->viewRenderer->setNoRender(true);
+
+    //     $k = $this->getRequest()->getPost('K');
+    //     $idsProjetsFiltres = $this->getRequest()->getPost('projets_ids');
+
+    //     if (!$k) {
+    //         http_response_code(400);
+    //         echo json_encode(['error' => 'Paramètre K manquant']);
+    //         return;
+    //     }
+
+    //     $modelFleche = new Application_Model_Fleche($k);
+
+    //     $projetsAvecFiches = $modelFleche->getProjetsAvecFiches();  //ok
+    //     $fichesNormales    = $modelFleche->getFichesAvecDuree();
+    //     $fichesActionCo    = $modelFleche->getActionCollectiveAvecDuree();
+    //     $projets           = $modelFleche->getProjets();
+    //     $groupesBruts      = $modelFleche->getGroupes();
+
+    //     $toutesLesFiches = array_merge($fichesNormales, $fichesActionCo);
+
+    //     $groupes = [];
+    //     foreach ($groupesBruts as $ordre => $ligneDefinitions) {
+    //         $nomLigne = $ligneDefinitions[0]['nom des fiches'] ?? "Ligne $ordre";
+    //         $ligne = [
+    //             'nom_ligne' => $nomLigne,
+    //             'ordre' => $ordre,
+    //             'fiches' => []
+    //         ];
+    //         foreach ($ligneDefinitions as $definition) {
+    //             $typeK = $definition['typeK'] ?? null;
+    //             $typefiche = $definition['typefiche'] ?? null;
+
+    //             foreach ($toutesLesFiches as $fiche) {
+    //                 if ($fiche['typeK'] === $typeK && $fiche['typefiche'] === $typefiche) {
+    //                     $ligne['fiches'][] = $fiche;
+    //                 }
+    //             }
+    //         }
+    //         if (!empty($ligne['fiches'])) {
+    //             $groupes[] = $ligne;
+    //         }
+    //     }
+
+    //     $listeProjets = [];
+    //     foreach ($projets as $projet) {
+    //         $idProjet = $projet->N ?? null;
+
+    //         if (!empty($idsProjetsFiltres) && is_array($idsProjetsFiltres) && !in_array($idProjet, $idsProjetsFiltres)) {
+    //             continue;
+    //         }
+
+    //         $jalons = [];
+    //         if (!empty($projet->jalons)) {
+    //             foreach ($projet->jalons as $jalon) {
+    //                 $jalons[] = [
+    //                     'id' => $jalon->N ?? null,
+    //                     'titre' => $jalon->NRtitreaction ?? '(Sans titre)',
+    //                     'date' => $jalon->NRdateaction ?? null,
+    //                 ];
+    //             }
+    //         }
+
+    //         $listeProjets[] = [
+    //             'id' => $idProjet,
+    //             'titre' => $projet->NRtitreaction ?? 'Projet sans titre',
+    //             'jalons' => $jalons,
+    //         ];
+    //     }
+
+
+    //     $groupsFinal = [];
+    //     $items = [];
+
+
+    //     function createItemPHP($fiche, $type = 'point')
+    //     {
+    //         $start = $fiche['typefiche_date_debut'] ?? $fiche['date_action'] ?? null;
+    //         $end = $fiche['typefiche_date_fin'] ?? null;
+    //         $couleur = $fiche['couleur'] ?? '#337ab7';
+    //         $nomAffiche = $fiche['nom_affiche'] ?? $fiche['typefiche_nomaffiche'] ?? 'Sans titre';
+    //         $titre = $fiche['titre_action'] ?? $fiche['typefiche'] ?? 'Sans titre';
+    //         $dateLabel = ($type === 'range' && $end) ? "$start - $end" : $start;
+    //         $item = [$titre, $type, $start, $nomAffiche, $dateLabel, $couleur];
+
+    //         if ($type === 'range' && $end) {
+    //             $item['end'] = $end;
+    //         }
+
+    //         return $item;
+    //     }
+
+
+    //     $groupsFinal = [];
+    //     $fichesGroupes = [];
+    //     $minDate = null;
+    //     $maxDate = null;
+
+    //     foreach ($toutesLesFiches as $fiche) {
+    //         $start = $fiche['typefiche_date_debut'] ?? $fiche['date_action'] ?? null;
+    //         $end = $fiche['typefiche_date_fin'] ?? null;
+    //         $nomAffiche = $fiche['nom_affiche'] ?? $fiche['typefiche_nomaffiche'] ?? 'Autres';
+    //         $type = $end ? 'range' : 'point';
+
+    //         if (!isset($fichesGroupes[$nomAffiche])) {
+    //             $fichesGroupes[$nomAffiche] = [
+
+    //                 'libelle' => $nomAffiche,
+    //                 'fiches' => []
+    //             ];
+    //         }
+
+    //         $fichesGroupes[$nomAffiche]['fiches'][] = $fiche; //là, j'ajoute la fiche à sa groupe correspond
+
+    //         $date = new DateTime($start);
+    //         if ($minDate === null || $date < $minDate) {
+    //             $minDate = clone $date;
+    //         }
+
+    //         $dateEnd = $end ? new DateTime($end) : $date;
+    //         if ($maxDate === null || $dateEnd > $maxDate) {
+    //             $maxDate = clone $dateEnd;
+    //         }
+    //     }
+
+    //     //mon final
+    //     foreach ($fichesGroupes as $group) {
+    //         $items = [];
+
+    //         foreach ($group['fiches'] as $fiche) {
+    //             $type = isset($fiche['typefiche_date_fin']) && $fiche['typefiche_date_fin'] ? 'range' : 'point';
+    //             $items[] = createItemPHP($fiche, $type);
+    //         }
+
+    //         $groupsFinal[] = [
+
+    //             'libelle' => $group['libelle'],
+    //             'fiches' => $items
+    //         ];
+    //     }
+
+
+    //     $result = [
+    //         "liste_projets" => $listeProjets, //à voir 1
+    //         "projets" => array_values($projetsAvecFiches), // à voir 2
+    //         'groups' => $groupsFinal,   //ok
+    //         // 'items' => $items,  //ok
+    //         'minDate' => $minDate->format('Y-m-d'),
+    //         'maxDate' => $maxDate->format('Y-m-d')
+    //     ];
+
+    //     echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // }
+
+
+//     $modelFleche
+//<?php
+// class Application_Model_Fleche extends Zend_Db_Table_Abstract {
+//     private int $K;
+
+//     public function __construct($K) {
+//         parent::__construct();
+//         $this->K = $K;
+//     }
+
+//     public function getGroupes() {
+//         $sql = 'SELECT * FROM aux_typefiche_ligne_fleche ORDER BY ordre';
+//         $res = $this->_db->fetchAll($sql);
+
+//         $data = [];
+//         foreach ($res as $ligne) {
+//             $groupe = [];
+//             $json = json_decode($ligne['typefiches_json'], true);
+//             foreach ($json as $value) {
+//                 $groupe[] = [
+//                     "libelle" => $ligne['ligne_nom_affiche'],
+//                     "typeK" => $ligne['typeK'],
+//                     "typefiche" => $value
+//                 ];
+//             }
+//             $data[] = $groupe;
+//         }
+
+//         $sql = "SELECT * FROM aux_vrs_dates_fleche
+//             JOIN aux_typefiche USING (typeK, typefiche)
+//             ORDER BY ordre";
+//         $res = $this->_db->fetchAll($sql);
+
+//         foreach ($res as $ligne) {
+//             $data[] = [[
+//                 "libelle" => $ligne['nom_affiche'],
+//                 "typeK" => $ligne['typeK'],
+//                 "typefiche" => $ligne['typefiche']
+//             ]];
+//         }
+//         return $data;
+//     }
+
+//     public function getFiches() {
+//         $sql = "SELECT  
+//             fiche_valides.N, 
+//             fiche_valides.typefiche,
+//             fiche_valides.typeK,
+//             fiche_valides.nom_affiche,
+//             titre_action.vl AS titre_action,
+//             date_action.vl AS date_action,
+//             group_concat(tbprojets.N) as projets
+//         FROM tbk AS base_table
+//         INNER JOIN (
+//             SELECT  
+//                 meta.K, 
+//                 meta.N, 
+//                 meta.typefiche, 
+//                 type_fiche_info.typeK, 
+//                 type_fiche_info.nom_affiche
+//             FROM tbmeta AS meta
+//             INNER JOIN aux_typefiche AS type_fiche_info 
+//                 ON meta.typefiche = type_fiche_info.typefiche
+//             WHERE 
+//                 type_fiche_info.categorie = 'NRaction'
+//                 AND type_fiche_info.typefiche NOT LIKE 'ARCHIV\_%'
+//                 AND type_fiche_info.typefiche NOT LIKE 'SUPPR\_%'
+//                 AND type_fiche_info.typefiche <> 'NRaccueiladmin'
+//         ) AS fiche_valides
+//             ON fiche_valides.K = base_table.K 
+//             AND fiche_valides.typeK = base_table.typeK
+//         INNER JOIN (
+//             SELECT N, vl 
+//             FROM tbkvc100 
+//             WHERE actif = 1 AND vr = 'NRtitreaction'
+//         ) AS titre_action
+//             ON titre_action.N = fiche_valides.N
+//         INNER JOIN (
+//             SELECT N, vl 
+//             FROM tbkdate 
+//             WHERE actif = 1 AND vr = 'NRdateaction'
+//         ) AS date_action
+//             ON date_action.N = fiche_valides.N
+//         LEFT JOIN tbprojets ON tbprojets.K = base_table.K AND N_jalon = fiche_valides.N
+//         WHERE base_table.K = ?
+//         GROUP BY fiche_valides.N
+//     ";
+
+
+//         $result = $this->_db->fetchAll($sql, [$this->K]);
+
+//         foreach ($result as &$ligne) {
+//             $ligne["couleur"] = $this->getCouleurTypefiches($ligne["typefiche"], $ligne["N"]);
+//         }
+//         return $result;
+//     }
+
+//     public function getTimelineData() {
+//         $groupes = $this->getGroupes();
+//         $fiches = $this->getFiches();
+
+//         $timeline = [];
+
+//         foreach ($groupes as $index => $ligneFleche) {
+//             $nomLigne = $ligneFleche[0]['nom des fiches'] ?? "Ligne $index";
+
+//             foreach ($ligneFleche as $definition) {
+//                 $typeK = $definition['typeK'];
+//                 $typefiche = $definition['typefiche'];
+
+//                 foreach ($fiches as $fiche) {
+//                     if ($fiche['typefiche'] === $typefiche && $fiche['typeK'] === $typeK) {
+//                         $timeline['ligne' . $index]['nom'] = $nomLigne;
+//                         $timeline['ligne' . $index]['fiches'][$typefiche][] = $fiche;
+//                     }
+//                 }
+//             }
+//         }
+//         return $timeline;
+//     }
+
+//     public function actionCollective() {
+//         $sql = "SELECT  
+//             m.N AS N,
+//             NRtitreaction.vl AS NRtitreaction,
+//             t.typeK AS typeK,
+//             'NRaccueiladmin' AS typefiche,
+//             m.nom_affiche AS typefiche_nomaffiche,
+//             NRdateaction.vl AS NRdateaction,
+//             'actioncollective' AS dansdomaine
+//         FROM (
+//             SELECT K, typeK 
+//             FROM tbk 
+//             WHERE typeK LIKE 'NRTYPEKac%' 
+//                 AND typeK NOT LIKE 'NRTYPEKac%\\_ARCHIV' 
+//                 AND typeK NOT LIKE 'NRTYPEKac%\\_SUPPR'
+//         ) t
+//         INNER JOIN (
+//             SELECT N, K 
+//             FROM tbkliaison 
+//             WHERE actif = 1 AND vl = ?
+//             UNION
+//             SELECT N, CAST(vl AS UNSIGNED) AS K 
+//             FROM tbkliaison 
+//             WHERE actif = 1 AND K = ?
+//         ) l ON l.K = t.K
+//         INNER JOIN (
+//             SELECT a.K, a.N, a.typefiche, b.nom_affiche, b.typeK
+//             FROM tbmeta a
+//             INNER JOIN aux_typefiche b 
+//                 ON a.typefiche = b.typefiche
+//             WHERE a.typefiche = 'NRaccueiladmin'
+//                 AND b.categorie = 'NRaction'
+//         ) m ON m.K = t.K AND m.typeK = t.typeK
+//         INNER JOIN (
+//             SELECT N, vl 
+//             FROM tbkvc100 
+//             WHERE actif = 1 AND vr = 'NRtitreaction'
+//         ) NRtitreaction ON NRtitreaction.N = m.N
+//         INNER JOIN (
+//             SELECT N, vl 
+//             FROM tbkdate 
+//             WHERE actif = 1 AND vr = 'NRdateaction'
+//         ) NRdateaction ON NRdateaction.N = m.N
+//     ";
+
+
+//         $result = $this->_db->fetchAll($sql, [$this->K, $this->K]);
+//         return $result;
+//     }
+
+//     public function getActionCollectiveAvecDuree() {
+//         $actions = $this->actionCollective();
+
+//         return $this->duree($actions);
+//     }
+
+
+//     public function duree($data) {
+//         $sql = "SELECT * FROM aux_vrs_dates_fleche GROUP BY typek, typefiche";
+//         $date_debut_fin = $this->_db->fetchAll($sql);
+
+//         $resultats = [];
+
+//         foreach ($data as $ligne) {
+//             $search = ["typeK" => $ligne['typeK'], "typefiche" => $ligne['typefiche']];
+//             $typeficheAvecDuree = $this->array_search_multi($date_debut_fin, $search);
+
+//             if (!empty($typeficheAvecDuree)) {
+//                 $n = (int) $ligne['N'];
+//                 $vrDebut = $typeficheAvecDuree['vr_debut'];
+//                 $vrFin = $typeficheAvecDuree['vr_fin'];
+
+//                 $ligne["typefiche_date_debut"] = $this->_db->fetchOne(
+//                     "SELECT vl FROM tbkdate WHERE actif = 1 AND vr = ? AND N = ?",
+//                     [$vrDebut, $n]
+//                 );
+//                 $ligne["typefiche_date_debutFR"] = $this->dateEnFR($ligne["typefiche_date_debut"]);
+
+//                 $ligne["typefiche_date_fin"] = $this->_db->fetchOne(
+//                     "SELECT vl FROM tbkdate WHERE actif = 1 AND vr = ? AND N = ?",
+//                     [$vrFin, $n]
+//                 );
+//                 $ligne["typefiche_date_finFR"] = $this->dateEnFR($ligne["typefiche_date_fin"]);
+
+//                 $ligne["projets"] = $ligne["projets"] ?? '';
+//             }
+
+//             $resultats[] = $ligne;
+//         }
+//         return $resultats;
+//     }
+
+//     public function getFichesAvecDuree() {
+//         $fiches = $this->getFiches();
+//         return $this->duree($fiches);
+//     }
+
+//     public function getProjetsAvecFiches(): array {
+//         $projets = $this->getProjets();
+//         $fichesNormales = $this->getFiches();
+//         $fichesActions = $this->actionCollective();
+//         $toutesFiches = array_merge($fichesNormales, $fichesActions);
+
+//         $result = [];
+
+//         foreach ($projets as $idProjet => $projet) {
+//             $result[$idProjet] = [
+//                 'projet' => $projet,
+//                 'fiches' => []
+//             ];
+
+//             foreach ($toutesFiches as $fiche) {
+//                 if ($fiche['N'] == $projet->N) {
+//                     $result[$idProjet]['fiches'][] = $fiche;
+//                 }
+//             }
+//         }
+
+//         return $result;
+//     }
+
+//     public function dateEnFR($dateEN) {
+//         if (!$dateEN) return null;
+//         $date = new DateTime($dateEN);
+//         return $date->format('d/m/Y');
+//     }
+
+//     public function dateEnEntier($dateEN) {
+//         if (!$dateEN) return null;
+//         $date = new DateTime($dateEN);
+//         return $date->format('Ymd');
+//     }
+
+//     public function array_search_multi($arr, $search) {
+//         foreach ($arr as $v) {
+//             if (array_intersect_assoc($v, $search) === $search) {
+//                 return $v;
+//             }
+//         }
+//         return [];
+//     }
+
+//     public function get_aux_uxcouleurs_typefiche($type, $N) {
+//         $qtype = $this->_db->quote($type);
+//         $sql = " SELECT atfc.$type, COALESCE(auc.couleur, '#FF4C61') as couleur
+//             from aux_typefiche_composition atfc
+//             join aux_uxcouleursicones auc
+//                 on auc.type = $qtype
+//                 and auc.nom = atfc.$type
+//                 and auc.actif
+//             group by atfc.$type
+//             Union 
+//             select  t0.typeK , COALESCE(auc.couleur, '#FF4C61') as couleur
+//             from tbmeta m
+//             join tbk t0 on t0.K = m.K
+//             join aux_uxcouleursicones auc
+//                 on auc.type = $qtype
+//                 and auc.nom = t0.typeK
+//                 and auc.actif
+//             where m.N = $N  
+//             group by t0.typeK
+//         ";
+
+//         $resultats = $this->_db->fetchAll($sql);
+//         return $resultats;
+//     }
+//     public function getCouleurTypefiches($typefiche, $N) {
+//         $res    = $this->get_aux_uxcouleurs_typefiche("typefiche", $N);
+//         $couleur = '#808080';
+//         $findTypefiche = $this->array_search_multi($res, array('typefiche' => $typefiche));
+//         if (count($findTypefiche) > 0)
+//             $couleur = $findTypefiche['couleur'];
+//         return $couleur;
+//     }
+
+
+//     // public function getProjets(): array {
+//     //     $data = $this->getDataProjets();
+//     //     $projets = [];
+
+//     //     foreach ($data as $ligne) {
+//     //         $idProjet = $ligne['K_projet'];
+
+//     //         if (!isset($projets[$idProjet])) {
+//     //             $projets[$idProjet] = new stdClass();
+//     //             $projets[$idProjet]->jalons = new stdClass();
+//     //         }
+//     //         foreach ($ligne as $key => $val) {
+//     //             if ($key !== 'K_projet' && strpos($key, '_jalon') === false && $key !== 'N_jalon') {
+//     //                 $projets[$idProjet]->{$key} = $val;
+//     //             }
+//     //         }
+//     //         if (!empty($ligne['N_jalon'])) {
+//     //             $idJalon = $ligne['N_jalon'];
+//     //             if (!isset($projets[$idProjet]->jalons->{$idJalon})) {
+//     //                 $projets[$idProjet]->jalons->{$idJalon} = new stdClass();
+//     //             }
+
+//     //             foreach ($ligne as $key => $val) {
+//     //                 if (strpos($key, '_jalon') !== false) {
+//     //                     $keyJalon = str_replace('_jalon', '', $key);
+//     //                     $projets[$idProjet]->jalons->{$idJalon}->{$keyJalon} = $val;
+//     //                 }
+//     //             }
+//     //         }
+//     //     }
+//     //     return $projets;
+//     // }
+
+
+
+
+
+
+//     // public function getDataProjets() {
+//     //     $sql = "SELECT
+//     //         p.K AS K_projet, 
+//     //         m.N AS N,
+//     //         NRtitreaction.vl AS NRtitreaction,
+//     //         m.typefiche AS typefiche,
+//     //         m.nom_affiche AS typefiche_nomaffiche,
+//     //         NRdateaction.vl AS NRdateaction,
+//     //         NRdatedebut.vl AS NRdatedebut,
+//     //         NRdatefin.vl AS NRdatefin,
+//     //         DATE_FORMAT(NRdatedebut.vl, '%Y%m%d') AS NRdatedebutINT,
+//     //         DATE_FORMAT(NRdatedebut.vl, '%d/%m/%Y') AS NRdatedebutFR,
+//     //         DATE_FORMAT(NRdatefin.vl, '%d/%m/%Y') AS NRdatefinFR,
+//     //         p.N_jalon AS N_jalon,
+//     //         m_jalon.typefiche AS typefiche_jalon,
+//     //         m_jalon.nom_affiche AS typefiche_nomaffiche_jalon,
+//     //         NRtitreaction_jalon.vl AS NRtitreaction_jalon,
+//     //         NRdateaction_jalon.vl AS NRdateaction_jalon,
+//     //         DATE_FORMAT(NRdateaction_jalon.vl, '%d/%m/%Y') AS NRdateactionFR_jalon
+
+//     //     FROM tbk t
+//     //     INNER JOIN (
+//     //         SELECT a.K, a.N, a.typefiche, b.typeK, b.nom_affiche
+//     //         FROM tbmeta a
+//     //         JOIN aux_typefiche b ON b.typefiche = a.typefiche
+//     //         WHERE b.categorie = 'NRprojet'
+//     //         AND b.typefiche NOT LIKE 'ARCHIV\\_%'
+//     //         AND b.typefiche NOT LIKE 'SUPPR\\_%'
+//     //     ) m ON m.K = t.K AND m.typeK = t.typeK
+
+//     //     LEFT JOIN (
+//     //         SELECT N, vl FROM tbkvc100 WHERE actif = 1 AND vr = 'NRtitreaction'
+//     //     ) NRtitreaction ON NRtitreaction.N = m.N
+
+//     //     LEFT JOIN (
+//     //         SELECT N, vl FROM tbkdate WHERE actif = 1 AND vr = 'NRdateaction'
+//     //     ) NRdateaction ON NRdateaction.N = m.N
+
+//     //     LEFT JOIN (
+//     //         SELECT N, vl FROM tbkdate WHERE actif = 1 AND vr = 'NRdatedebut'
+//     //     ) NRdatedebut ON NRdatedebut.N = m.N
+
+//     //     LEFT JOIN (
+//     //         SELECT N, vl FROM tbkdate WHERE actif = 1 AND vr = 'NRdatefin'
+//     //     ) NRdatefin ON NRdatefin.N = m.N
+
+//     //     LEFT JOIN tbprojets p ON p.N = m.N
+
+//     //     LEFT JOIN (
+//     //         SELECT a.K, a.N, a.typefiche, b.typeK, b.nom_affiche
+//     //         FROM tbmeta a
+//     //         JOIN aux_typefiche b ON b.typefiche = a.typefiche
+//     //         WHERE b.categorie = 'NRaction'
+//     //         AND b.typefiche NOT LIKE 'ARCHIV\\_%'
+//     //         AND b.typefiche NOT LIKE 'SUPPR\\_%'
+//     //     ) m_jalon ON m_jalon.N = p.N_jalon AND m.typeK = t.typeK
+
+//     //     LEFT JOIN (
+//     //         SELECT N, vl FROM tbkvc100 WHERE actif = 1 AND vr = 'NRtitreaction'
+//     //     ) NRtitreaction_jalon ON NRtitreaction_jalon.N = p.N_jalon
+
+//     //     LEFT JOIN (
+//     //         SELECT N, vl FROM tbkdate WHERE actif = 1 AND vr = 'NRdateaction'
+//     //     ) NRdateaction_jalon ON NRdateaction_jalon.N = p.N_jalon
+
+//     //     WHERE t.K = ?
+//     //     ORDER BY NRdatedebut.vl ASC, NRdateaction_jalon.vl ASC
+//     //     ";
+//     //     return $this->_db->fetchAll($sql, [$this->K]);
+//     // }
+// }

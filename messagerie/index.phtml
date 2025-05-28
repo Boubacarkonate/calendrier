@@ -1,0 +1,610 @@
+<link rel="stylesheet" href="/css/uxmessagerie.css" />
+<script src="/jquery/ux/uxmessagerie.js"></script>
+<style>
+.accordion-body {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+#filtre-annuaire {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+#filtre-annuaire .itemannuaire {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    background-color: #f0f0f0;
+}
+
+.ui-widget-content a:hover {
+    color: #666666 !important;
+    text-decoration: underline solid;
+}
+
+.filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+</style>
+<form class="row" method="post">
+    <div id="gauche" class="col-3 h-100">
+        <input id="typeenvoi" type="hidden" name="typeenvoi" value="<?= $this->mode ?>" />
+        <div id="topdest">
+            <span class="text-center fs-4">Destinataires</span>
+            <input type="text" id="inprech" class="my-2" placeholder="Rechercher dans la liste globale" />
+            <!-- <span id="messalaries">
+                <img src="/images/menu/filter.png" alt="Filtrer mes bénéficiaires" />   //// A CONSERVER OU NON ? ////
+                Filtrer mes bénéficiaires
+            </span> -->
+            <span class="selectglobal">
+                <span id="fermeture-popup"><i class="fa-regular fa-circle-xmark"></i></span>
+                <?php foreach ($this->annuaire as $typek => $item) : ?>
+                <fieldset class="uxmlstk" data-typek="<?= $typek ?>">
+                    <legend><?= $typek ?>s</legend>
+                    <!-- <label>
+                            <input type="checkbox" class="touttk" />
+                            <i>Tous les <?= $typek ?>s</i>
+                        </label> -->
+                    <?php foreach ($item as $K => $pers) : ?>
+                    <div class="<?= $pers['classes'] ?>">
+                        <label>
+                            <input type="checkbox" name="destinataire[]" id="destinataire<?= $K ?>" value="<?= $K ?>"
+                                <?= isset($pers['Zfemail']) ? 'courriel="' . $pers['Zfemail'] . '"' : '' ?> />
+                            <?= $pers['NomAffiche1'] ?>
+                        </label>
+                    </div>
+                    <?php endforeach ?>
+                    <hr>
+
+                </fieldset>
+                <?php endforeach ?>
+            </span>
+        </div>
+
+        <template id="templatefiltre">
+
+            <div id="filtre-annuaire">
+                <input type="text" class="inprech" placeholder="Saisir un nom" />
+                <!-- <span id="messalaries">
+                    <img src="/images/menu/filter.png" alt="Filtrer mes bénéficiaires" />     //// A CONSERVER OU NON ? ////
+                    Filtrer mes bénéficiaires
+                </span> -->
+                <?php foreach ($this->annuaire as $typek => $item): ?>
+                <?php if (count($item) == 0) continue ?>
+                <div class="uxmlstk d-flex flex-column mt-3" data-typek="<?= $typek ?>">
+
+                    <?= $typek ?>s
+
+                    <?php if (count($item) > 1): ?>
+                    <div>
+                        <label class="fs-5">
+                            <input type="checkbox" class="touttk" />
+                            Tous les <?= strtolower($typek) ?>s
+                        </label>
+                    </div>
+                    <?php endif ?>
+                    <?php foreach ($item as $K => $pers): ?>
+                    <div class="<?= $pers['classes'] ?>">
+                        <label>
+                            <input type="checkbox" name="destinataire[]" id="destinataire<?= $K ?>" value="<?= $K ?>"
+                                <?= isset($pers['Zfemail']) ? 'courriel="' . $pers['Zfemail'] . '"' : '' ?> />
+                            <?= $pers['NomAffiche1'] ?>
+                        </label>
+                    </div>
+                    <?php endforeach ?>
+                </div>
+                <?php endforeach ?>
+            </div>
+        </template>
+
+        <div id="destinataires">
+            <div id="liste">
+                <?php if (!is_null($this->kSourceNomAffiche)) : ?>
+                <b>Filtré à partir de "<?= $this->kSourceNomAffiche ?>"</b>
+                <?php endif ?>
+
+                <div class="accordion accordion-flush" id="accordionDestinataires">
+                    <?php $index = 0; ?>
+                    <?php foreach ($this->annuaire as $typek => $item): ?>
+                    <?php if (count($item) == 0) continue; ?>
+
+                    <?php
+                        $collapseId = "collapse" . $index;
+                        $headingId = "heading" . $index;
+                        ?>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="<?= $headingId ?>">
+                            <button class="accordion-button 
+                                 fs-4 <?= $index !== 0 ? 'collapsed' : '' ?>" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#<?= $collapseId ?>" aria-expanded="true"
+                                aria-controls="<?= $collapseId ?>">
+                                <?= $typek ?>s
+                            </button>
+                        </h2>
+                        <div id="<?= $collapseId ?>" class="accordion-collapse collapse show"
+                            aria-labelledby="<?= $headingId ?>">
+                            <div class="accordion-body">
+                                <button type="button" class="btn-filter btn btn-secondary btn-sm mb-3"
+                                    data-typek="<?= $typek ?>">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Recherche ciblée
+                                </button>
+                                <div id="filtreK" class="nom" data-typek="<?= $typek ?>"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <?php $index++; ?>
+                    <?php endforeach ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="centre" class="col-5 d-flex flex-column">
+        <div class="sujet text-center p-2">
+            <div id="sms-limites"></div>
+            <input class="form-control w-100" type="text" name="sujet" placeholder="Sujet" required />
+        </div>
+        <div class="message flex-grow-1">
+            <textarea id="sms-message" class="form-control w-100 h-100"
+                maxlength="<?= $this->smsMessageMaxCaracteres ?>" name="message" required></textarea>
+            <textarea id="email-message" class="form-control w-100 h-100" name="message" required></textarea>
+        </div>
+    </div>
+
+    <div id="droite" class="col-4 h-100">
+        <div id="templates">
+            <?php foreach ($this->templates as $template): ?>
+            <div class="card"><?= $template ?></div>
+            <?php endforeach ?>
+        </div>
+    </div>
+</form>
+
+<script>
+function sendMail(mailto) {
+    let dests = [];
+    $("div.itemannuaire input[type=checkbox]:checked").each(function(icb, ocb) {
+        dests.push($(ocb).val());
+    });
+
+    let sujet = $("input[name=sujet]").val();
+    let msgtext = $("textarea#email-message").val();
+    let data = {
+        dests: dests,
+        sujet: sujet,
+        msgtext: msgtext,
+    };
+    $.ajax({
+        type: "POST",
+        url: "/uxmessagerie/sendmail",
+        dataType: "json",
+        data: data,
+        async: true,
+        success: function() {
+            window.location.href = mailto;
+        },
+        error: function(resultat, statut, erreur) {
+            traiteRetourErreurAjax(resultat, statut, erreur);
+        }
+    });
+}
+
+function sendSms() {
+    let dests = [];
+    $("div.itemannuaire input[type=checkbox]:checked").each(function(icb, ocb) {
+        dests.push($(ocb).val());
+    });
+
+    let msgtext = $("textarea#sms-message").val();
+    let data = {
+        dests: dests,
+        msgtext: msgtext,
+    };
+    $.ajax({
+        type: "POST",
+        url: "/uxmessagerie/sendsms",
+        dataType: "json",
+        data: data,
+        async: true,
+        success: function(data) {
+            updateAffichageSmsLimites();
+            alert(data.message_pour_client);
+        },
+        error: function(resultat, statut, erreur) {
+            traiteRetourErreurAjax(resultat, statut, erreur);
+        }
+    });
+}
+
+function updateAffichageSmsLimites() {
+    $.ajax({
+        type: "GET",
+        url: "/uxmessagerie/smslimites",
+        dataType: "html",
+        async: true,
+        success: function(retour) {
+            $("#sms-limites").html(retour);
+        },
+        error: function(resultat, statut, erreur) {
+            traiteRetourErreurAjax(resultat, statut, erreur);
+        }
+    });
+}
+
+function getNbSms() {
+    let nbdest = $("div.itemannuaire input[type=checkbox]:checked").length;
+    let msgtext = $("textarea#sms-message").val();
+    let kdest1 = $("div.itemannuaire input[type=checkbox]:checked").first().val();
+    let data = {
+        nbdest: nbdest,
+        msgtext: msgtext,
+        kdest1: kdest1,
+    };
+    $.ajax({
+        type: "POST",
+        url: "/uxmessagerie/getnbsms",
+        dataType: "json",
+        data: data,
+        async: true,
+        success: function(retour) {
+            if (retour.message_pour_client) {
+                alert(retour.message_pour_client);
+            } else if (confirm("Cette transaction vous fera consommer\n" + retour['nbsms'] +
+                    " sms.\nVoulez-vous continuer ?")) {
+                sendSms();
+            }
+        },
+        error: function(resultat, statut, erreur) {
+            traiteRetourErreurAjax(resultat, statut, erreur);
+        },
+        complete: function(jqXHR, textStatus) {
+            resetBtenvoyer();
+        }
+    });
+}
+
+function getLienMailto() {
+    const validateEmail = (email) => {
+        return email.match(
+            /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+        );
+    };
+
+    let dests = [];
+    $("#filtreK[data-typek]").find(".filter-item").each(function() {
+        const email = $(this).data("email");
+        if (validateEmail(email)) {
+            dests.push(email);
+        }
+    });
+
+    if (dests.length < 1) return null;
+
+    let mailto = "mailto:" + dests.join(";");
+    let extras = [];
+    let sujet = $("input[name=sujet]").val();
+    if (sujet.length > 0) {
+        extras.push("subject=" + encodeURIComponent(sujet));
+    }
+    let msgtext = $("textarea#email-message").val();
+    if (msgtext.length > 0) {
+        extras.push("body=" + encodeURIComponent(msgtext));
+    }
+    if (extras.length > 0) {
+        mailto += "?" + extras.join("&");
+    }
+    return mailto;
+}
+
+function filtrerAnnuaire() {
+    let filtre = $("input#inprech").val();
+    let montrer = $("input[name=typeenvoi]").val() === 'sms' ? 'Zftel' : 'Zfemail';
+    $("div.itemannuaire").hide();
+    $("input[name='destinataire[]']:checked").parents().show();
+    let sel = mstoggle ? "div.itemannuaire.messalaries." : "div.itemannuaire.";
+    if (filtre.length > 0) {
+        $(sel + montrer).find("label:contains_ci(" + $.escapeSelector(filtre) + ")").parents().show();
+    } else {
+        $(sel + montrer).show();
+    }
+}
+
+function resetBtenvoyer() {
+    $("input#btenvoyer").removeClass('disabled');
+}
+
+function initModeEmail() {
+    $("#sms-message").hide();
+    $("#sms-limites").hide();
+    $("input[name=sujet]").val("").prop("required", true).show();
+    $("#email-message").show();
+}
+
+function initModeSms() {
+    $("#email-message").hide();
+    $("input[name=sujet]").val("").prop("required", false).hide();
+    $("#sms-limites").show();
+    $("#sms-message").show();
+}
+var mstoggle = false;
+$(document).ready(function() {
+    $("div.itemannuaire").hide();
+    if ($("input[name=typeenvoi]").val() === 'sms') {
+        $("div.itemannuaire.Zftel").show();
+        initModeSms();
+        updateAffichageSmsLimites();
+        $("div#templates .card").on("click", function() {
+            const msgtext = $("textarea#sms-message").val();
+            if (msgtext.length > 0) return;
+            $("textarea#sms-message").val($(this).html().substring(0, $("textarea#sms-message").attr(
+                "maxlength")));
+        });
+    } else {
+        $("div.itemannuaire.Zfemail").show();
+        initModeEmail();
+        $("div#templates .card").on("click", function() {
+            const msgtext = $("textarea#email-message").val();
+            if (msgtext.length > 0) return;
+            $("textarea#email-message").val($(this).html());
+        });
+    }
+    $("input#inprech").on("input", function() {
+        filtrerAnnuaire();
+    })
+    $("#messalaries").on("click", function() {
+        mstoggle = !mstoggle;
+        filtrerAnnuaire();
+    })
+    $("input[type=checkbox].touttk").on("change", function() {
+        $(this)
+            .closest(".accordion-body")
+            .find("input[name='destinataire[]']:visible")
+            .prop("checked", $(this).prop("checked"));
+    });
+    $("#btmailto").click(() => {
+        const mailto = getLienMailto();
+        if (mailto == null) return;
+        displayConfirmDialog(
+            `Cliquez sur confirmer pour continuer l'envoi sur votre propre application de messagerie :`,
+            300, "", true, true, 500, () => {
+                sendMail(mailto);
+            });
+    })
+    $("input#btenvoyer").click(function() {
+        if (!$(this).hasClass('disabled')) {
+            $(this).addClass("disabled");
+
+            let nbdest = $("div.itemannuaire input[type=checkbox]:checked").length;
+            if (nbdest < 1) {
+                alert("Vous devez renseigner au moins un destinataire");
+                resetBtenvoyer();
+                return false;
+            }
+            let montrer = $("input[name=typeenvoi]").val() === 'sms' ? 'Zftel' : 'Zfemail';
+            let taillemess = 0;
+            switch (montrer) {
+                case "Zftel":
+                    taillemess = $("div#centre div.message textarea#sms-message").val().length;
+                    break;
+                default:
+                    taillemess = $("div#centre div.message textarea#email-message").val().length;
+            }
+            if (taillemess < 1) {
+                alert("Vous devez saisir un message");
+                resetBtenvoyer();
+                return false;
+            }
+            switch (montrer) {
+                case "Zftel":
+                    getNbSms();
+                    break;
+            }
+        }
+    });
+
+
+    // modal contenant les checkboxes à choisir
+    $(".btn-filter").click(function() {
+        const typek = $(this).data("typek");
+
+        const templateFiltreAnnuaire = document.getElementById("templatefiltre");
+        const modalClone = templateFiltreAnnuaire.content.cloneNode(true);
+        const modalContainer = $("<div>").append(modalClone);
+
+        modalContainer.find(".uxmlstk").each(function() {
+            if ($(this).data("typek") !== typek) {
+                $(this).remove();
+            }
+        });
+
+        const $inprech = modalContainer.find("input.inprech");
+
+        function filtrerAnnuaireLocal() {
+            let filtre = $inprech.val().toLowerCase();
+            let montrer = $("input[name=typeenvoi]").val() === 'sms' ? 'Zftel' : 'Zfemail';
+
+            modalContainer.find("div.itemannuaire").hide();
+            modalContainer.find("input[name='destinataire[]']:checked").parents("div.itemannuaire")
+                .show();
+
+            let sel = mstoggle ? ".itemannuaire.messalaries." : ".itemannuaire.";
+
+            if (filtre.length > 0) {
+                modalContainer.find(sel + montrer).each(function() {
+                    const labelText = $(this).text().toLowerCase();
+                    $(this).toggle(labelText.includes(filtre));
+                });
+            } else {
+                modalContainer.find(sel + montrer).show();
+            }
+
+            modalContainer.find("#messalaries").on("click", function() {
+                mstoggle = !mstoggle;
+                filtrerAnnuaireLocal();
+            });
+        }
+
+        $inprech.on("input", filtrerAnnuaireLocal);
+
+        displayConfirmDialog(
+            modalContainer,
+            600,
+            "Filtrer les individus",
+            true,
+            false,
+            "auto",
+            function() {
+                renderSelectedFilters(modalContainer, typek);
+            },
+            function() {}
+        );
+        setTimeout(() => {
+            $(".ui-dialog").last().css({
+                top: "200px",
+
+            });
+        }, 0);
+
+        modalContainer.find("input[type=checkbox].touttk").on("change", function() {
+            $(this)
+                .closest(".uxmlstk")
+                .find("input[name='destinataire[]']:visible")
+                .prop("checked", this.checked);
+        });
+    });
+
+    //rendu des noms choisis dans le filtre
+    function renderSelectedFilters(modalContainer, typek) {
+        const divFiltreK = document.querySelector(`#filtreK[data-typek='${typek}']`);
+
+        divFiltreK.innerHTML = "";
+        const addedLabels = new Set();
+
+        modalContainer.find("input[type=checkbox]:checked").each(function() {
+            const $input = $(this);
+            const $label = $input.closest("label");
+            const labelText = $label.text().trim();
+            const email = $input.data("courriel") || $input.attr("courriel") || $input.data(
+                "destinataire");
+
+
+            if (!addedLabels.has(labelText) && email) {
+                addedLabels.add(labelText);
+
+                const labelElement = $("<div>")
+                    .addClass("filter-item d-inline-block me-2 mb-2 px-2 py-1 bg-light border rounded")
+                    .text(labelText)
+                    .attr("data-email", email || "");
+
+                const closeButton = $("<span>")
+                    .addClass("close-filter")
+                    .text("×")
+                    .css({
+                        "color": "#999",
+                        "font-size": "20px",
+                        "cursor": "pointer",
+                        "margin-left": "8px",
+                        "font-weight": "bold"
+                    })
+                    .hover(
+                        function() {
+                            $(this).css("color", "#333");
+                        },
+                        function() {
+                            $(this).css("color", "#999");
+                        }
+                    )
+                    .on("click", function() {
+                        $(this).closest(".filter-item").remove();
+                        modalContainer.find(`input[type=checkbox][data-courriel='${email}']`).prop(
+                            "checked", false);
+                        $(`div.itemannuaire input[type=checkbox][data-courriel='${email}']`).prop(
+                            "checked", false); // aussi décocher dans le DOM global
+                    });
+
+                labelElement.append(closeButton);
+                divFiltreK.appendChild(labelElement[0]);
+
+                $(`div.itemannuaire input[type=checkbox][courriel='${email}']`).prop("checked", true);
+            }
+
+        });
+    }
+
+
+    // fénêtre qui s'ouvre lorsque l'on cherche un nom dans l'input de recheche global
+    $('.selectglobal').hide()
+    $(".selectglobal input[type=checkbox]").on('change', function() {
+        const $input = $(this);
+        const $label = $input.closest("label");
+        const labelText = $label.text().trim();
+        const email = $input.data("courriel") || $input.attr("courriel");
+        const $fieldset = $input.closest("fieldset");
+        const typek = $fieldset.data("typek");
+        const $filtreK = $(`#accordionDestinataires #filtreK[data-typek='${typek}']`);
+
+        if ($input.is(":checked")) {
+
+            if ($filtreK.find(`div[data-label='${labelText}']`).length === 0) {
+                const labelElement = $("<div>")
+                    .attr("data-label", labelText)
+                    .attr("data-email", email)
+                    .addClass("filter-item d-inline-block me-2 mb-2 px-2 py-1 bg-light border rounded")
+                    .text(labelText);
+
+                const closeButton = $("<span>")
+                    .text("×")
+                    .css({
+                        "color": "#999",
+                        "font-size": "18px",
+                        "cursor": "pointer",
+                        "margin-left": "8px",
+                        "font-weight": "bold"
+                    })
+                    .hover(
+                        function() {
+                            $(this).css("color", "#333");
+                        },
+                        function() {
+                            $(this).css("color", "#999");
+                        }
+                    )
+                    .on("click", function() {
+                        labelElement.remove();
+                        $input.prop("checked", false);
+                    });
+
+                labelElement.append(closeButton);
+                $filtreK.append(labelElement);
+            }
+
+            $('.selectglobal').hide();
+        } else {
+            $filtreK.find(`div[data-label='${labelText}']`).remove();
+        }
+    });
+
+
+    $(document).click(function() {
+        $('.selectglobal').hide()
+    });
+    $(".closeFiltre").click(function() {
+        $('.selectglobal').hide()
+    });
+
+
+})
+</script>

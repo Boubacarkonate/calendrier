@@ -427,4 +427,113 @@ bouton pour effacer l'accordeon ?
 
 
 
+
+
+
+
+
+        //fonction avec boostrap KOKOKOKOKOK
+        // eventClick: async function (info) {
+        //     info.jsEvent.preventDefault();
+        
+        //     // Récupérer l'élément du modal de Bootstrap
+        //     let modalContent = document.getElementById('modifFiche');
+        
+        //     if (!modalContent) {
+        //         console.error("Modal 'modifFiche' non trouvé");
+        //         return;
+        //     }
+        
+        //     // Fonction pour activer/désactiver les champs du formulaire
+        //     function modifchamps(dis, disp_style) {
+        //         modalContent.querySelector(`input[name='calmemodif[titre]']`).disabled = dis;
+        //         modalContent.querySelector(`input[name='calmemodif[date]']`).disabled = dis;
+        //         modalContent.querySelector(`input[name='calmemodif[deb]']`).disabled = dis;
+        //         modalContent.querySelector(`input[name='calmemodif[fin]']`).disabled = dis;
+        //         modalContent.querySelector(`input[name='calmemodif[couleur]']`).disabled = dis;
+        //         modalContent.querySelector(`button[title='Enregistrer']`).disabled = dis;
+        //         modalContent.querySelector(`span.calmemodifbt`).style.display = disp_style;
+        //     }
+        
+        //     // Initialiser les champs comme désactivés et masquer le bouton d'enregistrement
+        //     modifchamps(true, 'none');
+        
+        //     // Récupérer les données de l'événement selon la source
+        //     switch (info.event.source.id) {
+        //         case 'default':
+        //             const data = await getEvent(info.event.id);
+        //             if (data !== false) {
+        //                 loadZfcaldavevent(modalContent, data);
+        //                 modalContent.querySelector('.champlabel').innerHTML = `<a href="/uxtdbk?K=${data.K}" target="_blank">${data.ident}</a>`;
+        //                 modalContent.querySelector("input[name='calmemodif[id]']").value = data.id;
+        //                 modalContent.querySelector("a#calmemodiflink").href = data.link;
+        //                 modifchamps(false, 'flex');  // Activer les champs et afficher le bouton "Enregistrer"
+        //             }
+        //             break;
+        
+        //         case 'todo':
+        //             const dataTodo = await getEventTodo(info.event.id, info.event.extendedProps.K);
+        //             if (dataTodo !== false) {
+        //                 loadZfcaldavevent(modalContent, dataTodo);
+        //                 modalContent.querySelector('.champlabel').innerHTML = `<a href="${dataTodo.link}" target="_blank">Todo : ${dataTodo.ident}</a>`;
+        //                 modalContent.querySelector("input[name='calmemodif[id]']").value = dataTodo.id;
+        //                 modifchamps(false, 'flex');  // Activer les champs et afficher le bouton "Enregistrer"
+        //             }
+        //             break;
+        
+        //         default:
+        //             // Traitement des événements externes
+        //             let componentToHex = (val) => {
+        //                 const a = Number(val).toString(16);
+        //                 return a.length === 1 ? "0" + a : a;
+        //             };
+        //             let rgbtohex = (rgb) => {
+        //                 if (rgb.indexOf('rgb') !== 0)
+        //                     return rgb;
+        //                 return '#' + rgb
+        //                     .match(/\d+/g)
+        //                     .map(componentToHex)
+        //                     .join('');
+        //             };
+        
+        //             let color = info.el.className.includes('fc-daygrid-block-event') ? info.el.style.borderColor : info.el.firstChild.style.borderColor;
+        //             const obj = {
+        //                 title: info.event.title,
+        //                 start: dateToSqlString(info.event.start) + ' ' + info.event.start.toTimeString().substring(0, 5),
+        //                 end: dateToSqlString(info.event.end) + ' ' + info.event.end.toTimeString().substring(0, 5),
+        //                 color: rgbtohex(color),
+        //                 tag: ''
+        //             };
+        
+        //             loadZfcaldavevent(modalContent, obj);
+        //             modalContent.querySelector('.champlabel').innerHTML = `<span>Source externe</span>`;
+        //             modalContent.querySelector("input[name='calmemodif[id]']").value = '';
+        //             modalContent.querySelector("a#calmemodiflink").removeAttribute('href');
+        //             modifchamps(false, 'flex');  // Activer les champs et afficher le bouton "Enregistrer"
+        //             break;
+        //     }
+        
+        //     // Utiliser l'API de Bootstrap pour afficher le modal
+        //     var myModal = new bootstrap.Modal(modalContent);
+        //     myModal.show();
+        
+        //     // Afficher la boîte de dialogue de confirmation
+        //     // displayConfirmDialog(
+        //     //     modalContent, 
+        //     //     600,  
+        //     //     "Modifier l'événement", 
+        //     //     true,  
+        //     //     false, 
+        //     //     "auto", 
+        //     //     function () { 
+        //     //         console.log("Événement modifié");
+        //     //     },
+        //     //     function () { 
+        //     //         console.log("Modification annulée");
+        //     //     }
+        //     // );
+        // }
+
 </script>
+
+

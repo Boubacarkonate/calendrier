@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<!--les datas et la fleche sont display flex-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Parcours Salarié</title>
+
+  <!-- Styles de ta timeline fixe -->
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%; /* S'assurer que le corps et la page occupent toute la hauteur */
+    }
+
+
+
+.timeline-container {
+  position: relative;
+  width: 100%; /* Maintenant 100% directement */
+  height: 80vh;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+}
+
+/* Corps de la timeline */
+#timeline-widget {
+  width: 90%; /* 90% pour laisser 10% pour la flèche */
+  background-color: transparent;
+  z-index: 1;
+}
+
+/* Pointe de la flèche */
+.timeline-container::after {
+  content: '';
+  width: 10%;
+  height: 100%;
+  background-color: #b7db34; /* Couleur de la flèche */
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  position: absolute;
+  top: 0;
+  left: 90%; /* Placée juste après la timeline */
+  z-index: 2;
+}
+
+/* Plus d'animation */
+
+
+    /* Personnalisation des items de la timeline */
+    .vis-item.conforme {
+      color: white;
+        border-radius: 50%;
+       
+    }
+
+    .vis-item.nonconforme {
+      color: white;
+        border-radius: 50%;
+    }
+
+    .vis-item.dureeLong {
+      background-color: #F44336;
+      border-color: #D32F2F;
+      color: white;
+    }
+
+    .vis-time-axis .vis-text.vis-major::after {
+      content: '→';
+      font-size: 20px;
+      margin-left: 10px;
+      color: #555;
+      position: relative;
+      top: -2px;
+    }
+
+    .vis-label,
+    .vis-group {
+      height: 100px !important;
+    }
+
+    .vis-label .vis-inner {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      font-weight: bold;
+      min-width: 200px !important;
+    }
+
+
+    #filters {
+      margin-bottom: 10px;
+    }
+
+    #filters input {
+      margin-right: 10px;
+    }
+
+
+
+    .panel {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+
+  </style>
+
+  <!-- Librairie vis-timeline -->
+  <link href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
+  <script src="https://unpkg.com/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"></script>
+</head>
+<body>
+
+  <h1>Visualisation du Parcours Salarié</h1>
+  <p>
+    <input type="text" id="jalon-input" placeholder="jalon" />
+  </p>
+  <div id="filters">
+    <label><input type="checkbox" class="filter-checkbox" data-group="1" checked> Bilans</label>
+    <label><input type="checkbox" class="filter-checkbox" data-group="2" checked> Entretiens</label>
+    <label><input type="checkbox" class="filter-checkbox" data-group="3" checked> Fiches de Synthèse</label>
+    <label><input type="checkbox" class="filter-checkbox" data-group="4" checked> Démarches</label>
+  </div>
+
+  <!-- Timeline container avec la flèche -->
+  <div class="timeline-container">
+    <div id="timeline-widget"></div>
+  </div>
+
+  <div class="panel" id="details-panel" style="display: none;">
+    <h3>Détails de l'Action</h3>
+    <p id="details-title"></p>
+    <p id="details-description"></p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('timeline-widget');
+    
+        // Définir les groupes
+        const groups = new vis.DataSet([
+            { id: 1, content: 'Bilans et entretiens' },
+            { id: 2, content: 'Fiches de synthèse' },
+            { id: 3, content: 'Démarches' },
+            { id: 4, content: 'Prestation partenaire' },
+            { id: 5, content: 'Contrats' },
+            { id: 6, content: 'Contrat de travail' },
+            { id: 7, content: 'Expérience professionnelle' },
+            { id: 8, content: 'Fiche Action collective' }
+        ]);
+    
+        const rawItems = [                                                                                                      //rien par défaut c'est une box
+            { id: 1, group: 1, content: "Bilan d'entrée", start: "2024-01-01", title: "Bilan d'entrée", className: 'conforme' },
+            { id: 2, group: 1, content: "Bilan de fin", start: "2024-03-01", title: "Bilan de fin", className: 'nonconforme' },
+            { id: 3, group: 2, content: "Entretien Annuel", start: "2024-02-01", title: "Entretien annuel", className: 'conforme' },
+            { id: 4, group: 3, content: "Fiche de Synthèse", start: "2024-04-01", title: "Fiche de synthèse", className: 'nonconforme' },
+            { id: 5, group: 4, content: "Démarche Administrative", start: "2024-05-01", title: "Démarche administrative", className: 'conforme' },
+            { id: 6, group: 2, content: "Démarche", start: "2024-01-01", title: "Démarche", className: 'conforme' },
+            { id: 7, group: 4, content: "Administrative", start: "2024-06-01", title: "Administrative", className: 'conforme' },
+            { id: 8, group: 1, content: "Bilan Intermédiaire", start: "2024-02-15", title: "Bilan intermédiaire", className: 'conforme' },
+            { id: 9, group: 3, content: "Fiche de Synthèse Année 1", start: "2024-07-01", title: "Fiche de synthèse - Année 1", className: 'nonconforme' },
+            { id: 10, group: 2, content: "Entretien 6 mois", start: "2024-07-15", title: "Entretien 6 mois", className: 'conforme' },
+            { id: 11, group: 4, content: "Démarche Post-Stage", start: "2024-08-01", title: "Démarche post-stage", className: 'conforme' },
+            { id: 12, group: 1, content: "Bilan de mi-parcours", start: "2024-09-01", title: "Bilan de mi-parcours", className: 'nonconforme' },
+            { id: 13, group: 3, content: "Fiche de Synthèse Année 2", start: "2024-11-01", title: "Fiche de synthèse - Année 2", className: 'conforme' },
+            { id: 14, group: 2, content: "Entretien Annuel 2", start: "2024-12-01", title: "Entretien annuel 2", className: 'conforme' },
+            { id: 15, group: 4, content: "Démarche Fin de Parcours", start: "2024-12-15", title: "Démarche fin de parcours", className: 'nonconforme' },
+            { id: 16, group: 1, content: "Bilan de Fin de Stage", start: "2024-10-01", title: "Bilan de fin de stage", className: 'conforme' },
+            { id: 17, group: 4, content: "Démarche Certification", start: "2024-09-01", title: "Démarche certification", className: 'conforme' },
+            { id: 18, group: 2, content: "Entretien de Revue de Carrière", start: "2024-11-15", title: "Entretien de revue de carrière", className: 'nonconforme' },
+            { id: 20, group: 5, content: "Période d’intégration", start: "2024-01-01", end: "2024-02-01", title: "Période d’intégration", className: 'dureeLong' },
+            { id: 21, group: 5, content: "Contrat de travail", start: "2024-01-01", end: "2024-03-01", title: "Contrat de travail", className: 'dureeLong' },
+            { id: 22, group: 5, content: "Contrat de travail", start: "2024-04-01", end: "2024-05-01", title: "Contrat de travail", className: 'dureeLong' },
+            // { id: 23, group: 5, content: "Contrat de travail", start: "2024-06-01", end: "2024-09-01", title: "Contrat de travail", className: 'dureeLong' },
+            // { id: 24, group: 6, content: "Formation", start: "2024-03-01", end: "2024-04-01", title: "Contrat de travail", className: 'dureeLong' },
+            // { id: 25, group: 7, content: "Bénévolat", start: "2024-04-01", end: "2024-05-01", title: "Bénévolat chez : La Croix-Rouge", className: 'dureeLong' },
+            // { id: 26, group: 7, content: "Bénévolat", start: "2024-05-01", end: "2024-06-01", title: "Bénévolat chez : La Croix-Rouge", className: 'dureeLong' },
+        ];
+    
+        // Traitement des types (point/range) et tooltip 
+        const allItems = new vis.DataSet(
+            rawItems.map(item => {
+                return {
+                    ...item,
+                    title: `<strong>${item.title}</strong><br>${item.start}${item.end ? ' → ' + item.end : ''}<br>${item.content}`
+                };
+            })
+        );
+
+        const displayedItems = new vis.DataSet();
+        displayedItems.add(allItems.get());
+
+        const options = {
+            stack: true,
+            groupOrder: 'id',
+            horizontalScroll: true,
+            zoomable: true,
+            showCurrentTime: true,
+            tooltip: { followMouse: true, delay: 30 },
+            margin: { item: 10, axis: 5 },
+            align: "center",
+            clickToUse: 'true',
+            loadingScreenTemplate: function () {  //voir pourquoi ne fonctionne pas
+    return "<h1>Loading...</h1>";
+  },
+        };
+
+        const timeline = new vis.Timeline(container, displayedItems, groups, options);
+
+        timeline.on('select', function (properties) {
+            const item = displayedItems.get(properties.items[0]);
+            if (item) {
+                const panel = document.getElementById('details-panel');
+                document.getElementById('details-title').textContent = item.title;
+                document.getElementById('details-description').textContent = `Description de l'action : ${item.content}`;
+                panel.style.display = 'block';
+            }
+        });
+
+
+
+
+// marker en custom-time qui traverse la timeline mais on ne peux pas l'ajuster au groupe souhaité
+
+timeline.on("doubleClick", function (properties) {
+  var eventProps = timeline.getEventProperties(properties.event);
+  if (eventProps.what === "custom-time") {
+    timeline.removeCustomTime(eventProps.customTime);
+  } else {
+    var id = new Date().getTime();
+    var markerText = document.getElementById("jalon-input").value || undefined;
+    timeline.addCustomTime(eventProps.time, id);
+    timeline.setCustomTimeMarker(markerText, id);
+  }
+});
+
+
+
+        // Appliquer les filtres
+        function applyFilters() {
+            const activeGroups = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
+                .map(input => parseInt(input.dataset.group));
+
+            const filteredItems = allItems.get({
+                filter: item => activeGroups.includes(item.group)
+            });
+
+            displayedItems.clear();
+            displayedItems.add(filteredItems);
+        }
+
+        // Lier les filtres
+        const filters = document.querySelectorAll('.filter-checkbox');
+        filters.forEach(filter => {
+            filter.addEventListener('change', applyFilters);
+        });
+    });
+  </script>
+
+</body>
+</html>

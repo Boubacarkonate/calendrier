@@ -1,122 +1,286 @@
-<!-- Inclusion des fichiers CSS pour le style du calendrier et de l'interface -->
-<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/uxmonespace.css" />
-<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/uxcalendrier.css" />
-<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/uxzf.css" />
-
-<!-- Inclusion des scripts JavaScript pour gérer le calendrier -->
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/calendrier/calendrier.css" />
+<link rel="stylesheet" href="<?= $this->baseUrl() ?>/css/fiche.css" />
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/fr.global.min.js'></script>
-<script src="/jquery/ux/calendrier/index.js"></script>
-<script src="/jquery/ux/calendrier/initgrid.js"></script>
+<script src="/js/calendrier/fullCalendar.js"></script>
+<script src="/js/calendrier/calendrier.js"></script>
 
-<!-- Conteneur principal du calendrier -->
-<div id="calme"></div>
 
-<!-- Section pour choisir les sources des événements affichés -->
-<div id="sources_calendrier">
-    <i class="fa-solid fa-eye"></i>
+
+<div id="page-container">
+
+    <div id="sidebar">
+        <!-- <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#ajoutFicheModal">
+            <i class="fas fa-cog fa-fw"></i> Ajouter une nouvelle fiche évènement
+        </button> -->
+        <button id="ajoutfiche" class="rz-bouton">Créer un nouvel évé</button>
+
+        <!-- <button id="openGestionCalendriers" class="rz-bouton">Gérer les calendriers jquery</button> -->
+
+        <div id="mini-calendar"></div>
+
+        <button type="button" id="btn-filter" class="btn btn-outline-primary btn-sm mb-3 w-100">
+            Rechercher
+        </button>
+
+        <div id="filter"></div>
+
+        <!-- Accordéon -->
+        <!-- <div class="accordion" id="accordionPanelsStayOpenExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="false"
+                        aria-controls="panelsStayOpen-collapseOne">
+                        Mes calendriers
+                    </button>
+                </h2>
+                <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="google-agenda">
+                                <label for="google-agenda" class="ps-2">Google Agenda</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="outlook">
+                                <label for="outlook" class="ps-2">Outlook</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#panelsStayOpen-collapseTwo" aria-expanded="false"
+                        aria-controls="panelsStayOpen-collapseTwo">
+                        Bénéficiaires
+                    </button>
+                </h2>
+                <div id="panelsStayOpen-collapseTwo" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne1">
+                                <label for="personne1" class="px-2">Personne 1</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne2">
+                                <label for="personne2" class="px-2">Personne 2</label>
+                            </li>
+                            <li class="d-flex align-items-center mb-2">
+                                <input type="checkbox" id="personne3">
+                                <label for="personne3" class="ps-2">Personne 3</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+
+    </div>
+
+
+    <div id="calme"></div>
+</div>
+<!-- Barre de recherche -->
+<div id="search-bar" class="champmodif blocpopover collapse fade">
+    <div id="sources_calendrier" class="m-4 ">
+        <!-- <i class="fa-solid fa-eye"></i>
     <span>
-        <!-- Case à cocher pour afficher les événements d'application -->
         <input type="checkbox" id="sourcedefault" value="default" checked="checked" />
         <label for="sourcedefault">Application</label>
     </span>
-
     <span class='<?= $this->sourceTODO ?>'>
-        <!-- Case à cocher pour afficher les événements TODO -->
         <input type="checkbox" id="sourcetodo" value="todo" checked="checked" />
         <label for="sourcetodo">TODO</label>
-    </span>
-
-    <!-- Boucle pour afficher dynamiquement les sources d'événements -->
-    <?php foreach ($this->sources as $i => $source) { ?>
-    <script>
-    // Ajout de la source d'événements dans le calendrier
-    sources.push({
-        id: '<?= $source['source'] ?>',
-        url: '/uxmonespace/sourcecal',
-        method: 'POST',
-        startParam: 'debut',
-        endParam: 'fin',
-        extraParams: {
-            url: '<?= $source['url'] ?>'
-        },
-        color: '<?= $source['couleur'] ?: '#ff8000' ?>',
-        textColor: <?php
-                    // Calcul automatique de la couleur du texte pour une meilleure lisibilité
-                    $hex = $source['couleur'] ?: '#ff8000';
-                    $r = hexdec(substr($hex, 1, 2));
-                    $g = hexdec(substr($hex, 3, 2));
-                    $b = hexdec(substr($hex, 5, 2));
-                    if ((0.299 * $r + 0.587 * $g + 0.114 * $b) / 255 > 0.5) echo "'#000000'";
-                    else echo "'#ffffff'"; ?>
-    })
-    </script>
-
-    <!-- Case à cocher pour activer/désactiver cette source -->
-    <span>
-        <input type="checkbox" id="source<?= $i ?>" value="<?= $source['source'] ?>" checked="checked" />
-        <label for="source<?= $i ?>"><?= $source['titre'] ?></label>
-    </span>
-    <?php } ?>
-
-    <!-- Bouton de partage du calendrier si l'utilisateur a accès -->
-    <?php if (NR_Utilitaires::verificationAbonnementModule('calendar_sync')) : ?>
-    <button id="btnpublier" class="rz-bouton" type="button">Partager</button>
-    <?php endif; ?>
-</div>
-
-<!-- Fenêtre modale pour ajouter un nouvel événement -->
-<div class="modal fade" id="addEventModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Ajouter un événement</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <label for="event-title" class="form-label">Titre</label>
-                <input type="text" id="event-title" class="form-control mb-2" placeholder="Nom de l'événement">
-
-                <label for="event-date" class="form-label">Date</label>
-                <input type="datetime-local" id="event-date" class="form-control mb-2">
-
-                <button id="save-event" class="btn btn-success w-100">Enregistrer</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Section pour gérer les événements et les filtres du calendrier -->
-<div id="filtres_calendrier" class="div-wrapper">
-    <input id="rechcheckboxlist" type="text" placeholder="Rechercher">
-    <span class="contact selecttout">
-        <input type="checkbox" id="selecttoutcb">
-        <label for="selecttoutcb">Sélectionner tout</label>
-        <i class="fas fa-check"></i>
-    </span>
-</div>
-
-<!-- Fenêtre modale pour partager le calendrier -->
-<div id="lienprive" class="cal-popup-publier">
-    <div class="cal-popup-inner">
-        <div class="cal-popup-inner-content">
-            <h1>Partager le calendrier <?= NR_Utilitaires::getTitreApplication(true) ?></h1>
-
+    </span> -->
+        <?php foreach ($this->sources as $i => $source) { ?>
             <script>
-            // Fonction pour copier le lien de partage dans le presse-papier
-            function toClipboard() {
-                if (!navigator.clipboard) return;
-                const lien = document.querySelector('[name="lienprive"]');
-                navigator.clipboard.writeText(lien.value).then(() => {
-                    alert("Lien copié dans le presse-papier");
-                });
-            }
+                sources.push({
+                    id: '<?= $source['source'] ?>',
+                    url: '/uxcalendrier/sourcecal',
+                    method: 'POST',
+                    startParam: 'debut',
+                    endParam: 'fin',
+                    extraParams: {
+                        url: '<?= $source['url'] ?>'
+                    },
+                    color: '<?= $source['couleur'] ?: '#ff8000' ?>',
+                    textColor: <?php
+                                $hex = $source['couleur'] ?: '#ff8000';
+                                $r = hexdec(substr($hex, 1, 2));
+                                $g = hexdec(substr($hex, 3, 2));
+                                $b = hexdec(substr($hex, 5, 2));
+                                if ((0.299 * $r + 0.587 * $g + 0.114 * $b) / 255 > 0.5) echo "'#000000'";
+                                else echo "'#ffffff'"; ?>
+                })
             </script>
-
-            <input type="text" readonly name="lienprive" value="<?= $this->lienprive ?>" />
-            <input class="rz-bouton" type="button" value="Copier dans le presse-papier" onclick="toClipboard()" />
-            <input class="rz-bouton" type="button" value="Reinitialiser le lien" onclick="reinitlink()" />
-        </div>
-        <span class="cal-popup-close fermerpopup">X</span>
+            <span>
+                <input type="checkbox" id="source<?= $i ?>" value="<?= $source['source'] ?>" checked="checked" />
+                <label for="source<?= $i ?>"><?= $source['titre'] ?></label>
+            </span>
+        <?php } ?>
+        <?php if (NR_Utilitaires::verificationAbonnementModule('calendar_sync')) : ?>
+            <button id="btnpublier" class="rz-bouton" type="button">Partager</button>
+        <?php endif; ?>
     </div>
+    <input type="button" class="rz-bouton btnbloc" value="Fermer"
+        onclick="document.getElementById('search-bar').classList.remove('show')">
+
+    <div id="filtres_calendrier" class="div-wrapper ">
+        <input id="rechcheckboxlist" type="text" placeholder="Rechercher">
+        <span class="contact selecttout">
+            <input type="checkbox" id="selecttoutcb">
+            <label for="selecttoutcb">Sélectionner tout</label>
+            <i class="fas fa-check"></i>
+        </span>
+    </div>
+
+    <div class="d-flex justify-content-center">
+        <button id="btnSearchValidate" class="btn btn-light mt-4 shadow-lg">Valider</button>
+    </div>
+
+</div>
+
+</div>
+
+
+
+</div>
+
+
+<div class="cell div-wrapper Zfcaldavevent">
+    <!-- ajout fiche -->
+    <template id="ajoutFicheTemplate">
+        <div id="ajoutFicheModal">
+            <div id="calmeajout" class="cal-menu-content">
+                <div class="corpspopup p-2">
+                    <fieldset id="ajout_fiche" class="mb-2">
+                        <div class="mb-2">
+                            <label for="selectajout" class="form-label">Sélectionner un type de fiche :</label>
+                            <select id="selectajout" class="form-select form-select-sm">
+                                <option></option>
+                                <?php foreach ($this->listeTypefiche as $tf) : ?>
+                                    <option data-typek="<?= $tf['typeK'] ?>" data-tkna="<?= $tf['tkna'] ?>"
+                                        data-vr="<?= $tf['vr'] ?>" value="<?= $tf['typefiche'] ?>">
+                                        <?= $tf['nom_affiche'] ?> (<?= $tf['tkna'] ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="row g-3 ">
+
+                            <div class="col-md-6">
+                                <label for="rechchoixk" class="form-label">Chercher dans la liste :</label>
+                                <input id="rechchoixk" type="text" class="form-control"
+                                    placeholder="Chercher dans la liste" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="choixk" class="form-label">Sélectionner un choix :</label>
+                                <div id="choixk-container">
+                                    <select id="choixk" class="form-select form-select-sm" required></select>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <?php echo NR_Utilitaires::minifyHTML($this->partial(
+                            "/uxcalendrier/partialzfcaldavevent.phtml",
+                            [
+                                "vr" => 'ajout_evenement',
+                                "nom_affiche" => '',
+                                "obligatoire" => true,
+                                "uid" => ''
+                            ]
+                        )); ?>
+                    </fieldset>
+                </div>
+
+                <div class="btspopup d-flex justify-content-center">
+                    <button id="newevent" class="rz-bouton" type="button">Enregistrer la saisie</button>
+                </div>
+
+            </div>
+    </template>
+
+    <!-- affiche fiche -->
+    <template id="modificationFicheTemplate">
+        <div id="modifFiche">
+            <div id="calmeajout" class="cal-menu-content">
+                <div class="corpspopup p-2">
+                    <div class="bg-success m-4">
+                        <a href="#" class="d-flex align-items-center fs-4 py-2">
+                            <i class="fas fa-quote-left fa-fw" aria-hidden="true"></i>
+                            Information <label class="tab__label ps-1 champlabel"></label>
+                        </a>
+                        <div class="cal-menu-content">
+                            <?php echo NR_Utilitaires::minifyHTML($this->partial(
+                                "/uxmonespace/partialzfcaldavevent.phtml",
+                                [
+                                    "vr" => 'calmemodif',
+                                    "nom_affiche" => '',
+                                    "obligatoire" => true,
+                                    "infobulle" => "Cliquez sur un évènement du calendrier pour en afficher les détails ici.",
+                                    "uid" => ''
+                                ]
+                            )); ?>
+                            <span class="calmemodifbt">
+                                <a id="calmemodiflink" target="_blank">Lien vers la fiche</a>
+                                <button class="rz-bouton" onclick="saveZfcaldavevent('calmemodif')" title="Enregistrer"
+                                    disabled>Enregistrer les modifications</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <!-- modif fiche  OKOKOKOKOKOKOKOK -->
+    <!-- <div class="modal fade" id="modifFiche" tabindex="-1" aria-labelledby="modiFicheLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modiFicheLabel">Modifier fiche évènement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+
+                <div class="bg-success m-4">
+                    <a href="#" class=" d-flex align-items-center fs-4 py-2"><i class="fas fa-quote-left fa-fw" aria-hidden="true"></i>Information <label class="tab__label ps-1"></label></a>
+                    <div class="cal-menu-content">
+                        <?php echo NR_Utilitaires::minifyHTML($this->partial(
+                            "/uxmonespace/partialzfcaldavevent.phtml",
+                            [
+                                "vr" => 'calmemodif',
+                                "nom_affiche" => '',
+                                "obligatoire" => true,
+                                "infobulle" => "Cliquez sur un évènement du calendrier pour en afficher les détails ici.",
+                                "uid" => ''
+                            ]
+                        )); ?>
+                        <span class="calmemodifbt">
+                            <a id="calmemodiflink" target="_blank">Lien vers la fiche</a>
+                            <button class="rz-bouton" onclick="saveZfcaldavevent('calmemodif')" title="Enregistrer" disabled>Enregistrer les modifications</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+
+
+
+</div>
+</div>
+
+
+
+
+
+
 </div>
